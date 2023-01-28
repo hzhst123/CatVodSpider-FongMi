@@ -58,7 +58,7 @@ public class Paper extends Spider {
                     String typeId = td.select("a").attr("href").replace("#", "");
                     if (!types.contains(typeId)) continue;
                     classes.add(new Class(typeId, td.text()));
-                    filters.put(typeId, Arrays.asList(new Filter("type", "類型", values)));
+                    filters.put(typeId, Arrays.asList(new Filter("type", "类型", values)));
                 } else {
                     String value = td.select("a").attr("onclick").split("'")[1];
                     values.add(new Filter.Value(td.text(), value));
