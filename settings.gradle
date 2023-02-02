@@ -13,6 +13,6 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "CatVodSpider"
+rootProject.name = "CatVodSpider蜜蜂"
 include ':app'
 include ':tools'
