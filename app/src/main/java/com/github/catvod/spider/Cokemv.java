@@ -400,6 +400,10 @@ public class Cokemv extends Spider {
                     String json = scContent.substring(start, end);
                     JSONObject player = new JSONObject(json);
                     String videoUrl = player.getString("url");
+                    if(!videoUrl.contains("http")){
+                    videoUrl = "https://cokemv.me/" + videoUrl;
+                    }
+                    
                         result.put("playUrl", "");
                         result.put("url", videoUrl);
                         result.put("header", headers.toString());
