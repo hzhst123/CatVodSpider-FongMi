@@ -66,6 +66,12 @@ public class Zhaozy extends Spider {
 
     @Override
     public String detailContent(List<String> ids) throws Exception {
+//        ids.set(1, ids.get(0));
+//        if (Ali.pattern.matcher(ids.get(0)).find()) return Ali.get().detailContent(ids);
+//        Matcher matcher = regexAli.matcher(OkHttp.string(siteUrl + ids.get(0), getHeader()));
+//        if (matcher.find())
+//            return Ali.get().detailContent(Arrays.asList(matcher.group(1), ids.get(0)));
+//        return "";
         Matcher matcher = regexAli.matcher(OkHttp.string(siteUrl + ids.get(0), getHeader()));
         if (!matcher.find()) return "";
         String videoId = ids.get(0);

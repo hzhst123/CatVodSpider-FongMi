@@ -40,7 +40,7 @@ import java.util.regex.Pattern;
  */
 public class Ali {
 
-    private final Pattern pattern = Pattern.compile("www.aliyundrive.com/s/([^/]+)(/folder/([^/]+))?");
+    public static final Pattern pattern = Pattern.compile("www.aliyundrive.com/s/([^/]+)(/folder/([^/]+))?");
     private ScheduledExecutorService service;
     private final Auth auth;
 
@@ -101,6 +101,13 @@ public class Ali {
         String shareId = matcher.group(1);
         String fileId = matcher.groupCount() == 3 ? matcher.group(3) : "";
         auth.setShareId(shareId); refreshShareToken();
+
+        if (ids.size() > 1) {
+            String vodId = ids.get(1);
+            Vod vod = getVod(url, fileId);
+            vod.setVodId(vodId);
+            return Result.string(vod);
+        }
         return Result.string(getVod(url, fileId));
     }
 

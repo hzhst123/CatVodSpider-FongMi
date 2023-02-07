@@ -18,17 +18,13 @@ import org.jsoup.select.Elements;
 
 import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import okhttp3.Headers;
 
 public class Nkdy extends Spider {
     private static final String siteUrl = "https://www.nkdyw.com";

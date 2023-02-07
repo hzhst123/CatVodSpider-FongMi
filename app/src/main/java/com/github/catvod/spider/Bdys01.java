@@ -6,10 +6,6 @@ import android.os.Build;
 import android.text.TextUtils;
 import android.util.Base64;
 
-import java.io.InputStream;
-import java.io.ByteArrayOutputStream;
-
-
 import com.github.catvod.crawler.Spider;
 import com.github.catvod.crawler.SpiderDebug;
 import com.github.catvod.utils.Misc;
@@ -25,8 +21,9 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;

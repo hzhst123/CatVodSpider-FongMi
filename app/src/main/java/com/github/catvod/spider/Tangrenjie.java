@@ -3,9 +3,6 @@ package com.github.catvod.spider;
 import android.content.Context;
 import android.text.TextUtils;
 import android.util.Base64;
-import android.widget.Switch;
-
-import java.net.URLDecoder;
 
 import com.github.catvod.crawler.Spider;
 import com.github.catvod.crawler.SpiderDebug;
@@ -19,6 +16,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Comparator;

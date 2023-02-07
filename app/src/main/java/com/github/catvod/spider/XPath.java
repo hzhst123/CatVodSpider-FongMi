@@ -3,22 +3,23 @@ package com.github.catvod.spider;
 import android.content.Context;
 import android.text.TextUtils;
 
-import com.github.catvod.bean.Class;
-import com.github.catvod.bean.Result;
-import com.github.catvod.bean.Vod;
 import com.github.catvod.crawler.Spider;
 import com.github.catvod.crawler.SpiderDebug;
-import com.github.catvod.net.OkHttp;
 import com.github.catvod.utils.Misc;
-import com.github.catvod.utils.Trans;
+import com.github.catvod.utils.okhttp.OkHttpUtil;
 import com.github.catvod.xpath.XPathRule;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.seimicrawler.xpath.JXDocument;
 import org.seimicrawler.xpath.JXNode;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,304 +28,629 @@ import java.util.Set;
 
 public class XPath extends Spider {
 
-    protected XPathRule rule = null;
-
-    private HashMap<String, String> getHeaders() {
-        HashMap<String, String> headers = new HashMap<>();
-        headers.put("User-Agent", rule.getUa().isEmpty() ? Misc.CHROME : rule.getUa());
-        return headers;
-    }
-
-    private void fetchRule(String ext) {
-        if (ext.startsWith("http")) {
-            String json = OkHttp.string(ext);
-            rule = XPathRule.fromJson(json);
-            loadRuleExt(json);
-        } else {
-            rule = XPathRule.fromJson(ext);
-            loadRuleExt(ext);
-        }
-    }
-
     @Override
+    public void init(Context context) {
+        super.init(context);
+    }
+
     public void init(Context context, String extend) {
         super.init(context, extend);
-        fetchRule(extend);
+        this.ext = extend;
     }
 
     @Override
-    public String homeContent(boolean filter) throws JSONException {
-        List<Vod> list = new ArrayList<>();
-        List<Class> classes = new ArrayList<>();
-        if (rule.getCateManual().size() > 0) {
-            Set<String> keys = rule.getCateManual().keySet();
-            for (String k : keys) classes.add(new Class(rule.getCateManual().get(k), k));
-        }
-        String webUrl = rule.getHomeUrl();
-        JXDocument doc = JXDocument.create(fetch(webUrl));
-        if (rule.getCateManual().size() == 0) {
-            List<JXNode> navNodes = doc.selN(rule.getCateNode());
-            for (int i = 0; i < navNodes.size(); i++) {
-                String name = navNodes.get(i).selOne(rule.getCateName()).asString().trim();
-                name = rule.getCateNameR(name);
-                String id = navNodes.get(i).selOne(rule.getCateId()).asString().trim();
-                id = rule.getCateIdR(id);
-                classes.add(new Class(id, name));
+    public String homeContent(boolean filter) {
+        try {
+            fetchRule();
+            JSONObject result = new JSONObject();
+            JSONArray classes = new JSONArray();
+            if (rule.getCateManual().size() > 0) {
+                Set<String> keys = rule.getCateManual().keySet();
+                for (String k : keys) {
+                    JSONObject jsonObject = new JSONObject();
+                    jsonObject.put("type_name", k);
+                    jsonObject.put("type_id", rule.getCateManual().get(k));
+                    classes.put(jsonObject);
+                }
             }
-        }
-        if (!rule.getHomeVodNode().isEmpty()) {
-            List<JXNode> vodNodes = doc.selN(rule.getHomeVodNode());
-            for (int i = 0; i < vodNodes.size(); i++) {
-                String name = vodNodes.get(i).selOne(rule.getHomeVodName()).asString().trim();
-                name = rule.getHomeVodNameR(name);
-                String id = vodNodes.get(i).selOne(rule.getHomeVodId()).asString().trim();
-                id = rule.getHomeVodIdR(id);
-                String pic = vodNodes.get(i).selOne(rule.getHomeVodImg()).asString().trim();
-                pic = rule.getHomeVodImgR(pic);
-                pic = Misc.fixUrl(webUrl, pic);
-                String mark = "";
-                if (!rule.getHomeVodMark().isEmpty()) {
+            try {
+                String webUrl = rule.getHomeUrl();
+                JXDocument doc = JXDocument.create(fetch(webUrl));
+                if (rule.getCateManual().size() == 0) {
+                    List<JXNode> navNodes = doc.selN(rule.getCateNode());
+                    for (int i = 0; i < navNodes.size(); i++) {
+                        String name = navNodes.get(i).selOne(rule.getCateName()).asString().trim();
+                        name = rule.getCateNameR(name);
+                        String id = navNodes.get(i).selOne(rule.getCateId()).asString().trim();
+                        id = rule.getCateIdR(id);
+                        JSONObject jsonObject = new JSONObject();
+                        jsonObject.put("type_id", id);
+                        jsonObject.put("type_name", name);
+                        classes.put(jsonObject);
+                    }
+                }
+                if (!rule.getHomeVodNode().isEmpty()) {
                     try {
-                        mark = vodNodes.get(i).selOne(rule.getHomeVodMark()).asString().trim();
-                        mark = rule.getHomeVodMarkR(mark);
+                        JSONArray videos = new JSONArray();
+                        List<JXNode> vodNodes = doc.selN(rule.getHomeVodNode());
+                        for (int i = 0; i < vodNodes.size(); i++) {
+                            String name = vodNodes.get(i).selOne(rule.getHomeVodName()).asString().trim();
+                            name = rule.getHomeVodNameR(name);
+                            String id = vodNodes.get(i).selOne(rule.getHomeVodId()).asString().trim();
+                            id = rule.getHomeVodIdR(id);
+                            String pic = vodNodes.get(i).selOne(rule.getHomeVodImg()).asString().trim();
+                            pic = rule.getHomeVodImgR(pic);
+                            pic = Misc.fixUrl(webUrl, pic);
+                            String mark = "";
+                            if (!rule.getHomeVodMark().isEmpty()) {
+                                try {
+                                    mark = vodNodes.get(i).selOne(rule.getHomeVodMark()).asString().trim();
+                                    mark = rule.getHomeVodMarkR(mark);
+                                } catch (Exception e) {
+                                    SpiderDebug.log(e);
+                                }
+                            }
+                            JSONObject v = new JSONObject();
+                            v.put("vod_id", id);
+                            v.put("vod_name", name);
+                            v.put("vod_pic", pic);
+                            v.put("vod_remarks", mark);
+                            videos.put(v);
+                        }
+                        result.put("list", videos);
                     } catch (Exception e) {
                         SpiderDebug.log(e);
                     }
                 }
-                list.add(new Vod(id, name, pic, mark));
+            } catch (Exception e) {
+                SpiderDebug.log(e);
             }
+            result.put("class", classes);
+            if (filter && rule.getFilter() != null) {
+                result.put("filters", rule.getFilter());
+            }
+            return result.toString();
+        } catch (
+                Exception e) {
+            SpiderDebug.log(e);
         }
-        return Result.string(classes, list, rule.getFilter());
+        return "";
+    }
+
+    protected HashMap<String, String> getHeaders(String url) {
+        HashMap<String, String> headers = new HashMap<>();
+        headers.put("User-Agent", rule.getUa().isEmpty()
+                ? "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.54 Safari/537.36"
+                : rule.getUa());
+        headers.put("Cookie",rule.getCookie());
+        return headers;
+    }
+
+    @Override
+    public String homeVideoContent() {
+        try {
+            fetchRule();
+        } catch (Exception e) {
+            SpiderDebug.log(e);
+        }
+        return "";
     }
 
     protected String categoryUrl(String tid, String pg, boolean filter, HashMap<String, String> extend) {
         return rule.getCateUrl().replace("{cateId}", tid).replace("{catePg}", pg);
     }
+    
+    protected String categoryUrl2(String tid, String pg, boolean filter, HashMap<String, String> extend) {
+        return rule.getCateUrl2().replace("{cateId}", tid).replace("{catePg}", pg);
+    }
 
     @Override
     public String categoryContent(String tid, String pg, boolean filter, HashMap<String, String> extend) {
-        String webUrl = categoryUrl(tid, pg, filter, extend);
-        List<Vod> list = new ArrayList<>();
-        JXDocument doc = JXDocument.create(fetch(webUrl));
-        List<JXNode> vodNodes = doc.selN(rule.getCateVodNode());
-        for (int i = 0; i < vodNodes.size(); i++) {
-            String name = vodNodes.get(i).selOne(rule.getCateVodName()).asString().trim();
-            name = rule.getCateVodNameR(name);
-            String id = vodNodes.get(i).selOne(rule.getCateVodId()).asString().trim();
-            id = rule.getCateVodIdR(id);
-            String pic = vodNodes.get(i).selOne(rule.getCateVodImg()).asString().trim();
-            pic = rule.getCateVodImgR(pic);
-            pic = Misc.fixUrl(webUrl, pic);
-            String mark = "";
-            if (!rule.getCateVodMark().isEmpty()) {
-                try {
-                    mark = vodNodes.get(i).selOne(rule.getCateVodMark()).asString().trim();
-                    mark = rule.getCateVodMarkR(mark);
-                } catch (Exception e) {
-                    SpiderDebug.log(e);
-                }
+        try {
+            fetchRule();
+            String webUrl = "";
+            int pageCount = 0;
+            if (!tid.startsWith("@")) {
+                webUrl = categoryUrl(tid, pg, filter, extend);
+                pageCount = Integer.MAX_VALUE;
+            } else {
+                webUrl = categoryUrl2(tid.replace("@",""), pg, filter, extend);
             }
-            list.add(new Vod(id, name, pic, mark));
-        }
-        return Result.string(list);
-    }
-
-    @Override
-    public String detailContent(List<String> ids) throws JSONException {
-        String webUrl = rule.getDetailUrl().replace("{vid}", ids.get(0));
-        String webContent = fetch(webUrl);
-        JXDocument doc = JXDocument.create(webContent);
-        JXNode vodNode = doc.selNOne(rule.getDetailNode());
-        String cover = "", title = "", desc = "", category = "", area = "", year = "", remark = "", director = "", actor = "";
-        title = vodNode.selOne(rule.getDetailName()).asString().trim();
-        title = rule.getDetailNameR(title);
-        if (!rule.getDetailImg().isEmpty()) {
-            try {
-                cover = vodNode.selOne(rule.getDetailImg()).asString().trim();
-                cover = rule.getDetailImgR(cover);
-                cover = Misc.fixUrl(webUrl, cover);
-            } catch (Exception e) {
-                SpiderDebug.log(e);
-            }
-        }
-        if (!rule.getDetailCate().isEmpty()) {
-            try {
-                category = vodNode.selOne(rule.getDetailCate()).asString().trim();
-                category = rule.getDetailCateR(category);
-            } catch (Exception e) {
-                SpiderDebug.log(e);
-            }
-        }
-        if (!rule.getDetailYear().isEmpty()) {
-            try {
-                year = vodNode.selOne(rule.getDetailYear()).asString().trim();
-                year = rule.getDetailYearR(year);
-            } catch (Exception e) {
-                SpiderDebug.log(e);
-            }
-        }
-        if (!rule.getDetailArea().isEmpty()) {
-            try {
-                area = vodNode.selOne(rule.getDetailArea()).asString().trim();
-                area = rule.getDetailAreaR(area);
-            } catch (Exception e) {
-                SpiderDebug.log(e);
-            }
-        }
-        if (!rule.getDetailMark().isEmpty()) {
-            try {
-                remark = vodNode.selOne(rule.getDetailMark()).asString().trim();
-                remark = rule.getDetailMarkR(remark);
-            } catch (Exception e) {
-                SpiderDebug.log(e);
-            }
-        }
-        if (!rule.getDetailActor().isEmpty()) {
-            try {
-                actor = vodNode.selOne(rule.getDetailActor()).asString().trim();
-                actor = rule.getDetailActorR(actor);
-            } catch (Exception e) {
-                SpiderDebug.log(e);
-            }
-        }
-        if (!rule.getDetailDirector().isEmpty()) {
-            try {
-                director = vodNode.selOne(rule.getDetailDirector()).asString().trim();
-                director = rule.getDetailDirectorR(director);
-            } catch (Exception e) {
-                SpiderDebug.log(e);
-            }
-        }
-        if (!rule.getDetailDesc().isEmpty()) {
-            try {
-                desc = vodNode.selOne(rule.getDetailDesc()).asString().trim();
-                desc = rule.getDetailDescR(desc);
-            } catch (Exception e) {
-                SpiderDebug.log(e);
-            }
-        }
-
-        Vod vod = new Vod();
-        vod.setVodId(ids.get(0));
-        vod.setVodName(title);
-        vod.setVodPic(cover);
-        vod.setTypeName(category);
-        vod.setVodYear(year);
-        vod.setVodArea(area);
-        vod.setVodRemarks(remark);
-        vod.setVodActor(actor);
-        vod.setVodDirector(director);
-        vod.setVodContent(desc);
-
-        ArrayList<String> playFrom = new ArrayList<>();
-        List<JXNode> fromNodes = doc.selN(rule.getDetailFromNode());
-        for (int i = 0; i < fromNodes.size(); i++) {
-            String name = fromNodes.get(i).selOne(rule.getDetailFromName()).asString().trim();
-            name = rule.getDetailFromNameR(name);
-            playFrom.add(name);
-        }
-
-        ArrayList<String> playList = new ArrayList<>();
-        List<JXNode> urlListNodes = doc.selN(rule.getDetailUrlNode());
-        for (int i = 0; i < urlListNodes.size(); i++) {
-            List<JXNode> urlNodes = urlListNodes.get(i).sel(rule.getDetailUrlSubNode());
-            List<String> vodItems = new ArrayList<>();
-            for (int j = 0; j < urlNodes.size(); j++) {
-                String name = urlNodes.get(j).selOne(rule.getDetailUrlName()).asString().trim();
-                name = rule.getDetailUrlNameR(name);
-                String id = urlNodes.get(j).selOne(rule.getDetailUrlId()).asString().trim();
-                id = rule.getDetailUrlIdR(id);
-                vodItems.add(Trans.get(name) + "$" + id);
-            }
-            if (vodItems.size() == 0 && playFrom.size() > i) {
-                playFrom.set(i, "");
-            }
-            playList.add(TextUtils.join("#", vodItems));
-        }
-        for (int i = playFrom.size() - 1; i >= 0; i--) {
-            if (playFrom.get(i).isEmpty()) playFrom.remove(i);
-        }
-        for (int i = playList.size() - 1; i >= 0; i--) {
-            if (playList.get(i).isEmpty()) playList.remove(i);
-        }
-        for (int i = playList.size() - 1; i >= 0; i--) {
-            if (i >= playFrom.size()) playList.remove(i);
-        }
-        vod.setVodPlayFrom(TextUtils.join("$$$", playFrom));
-        vod.setVodPlayUrl(TextUtils.join("$$$", playList));
-        return Result.string(vod);
-    }
-
-    @Override
-    public String playerContent(String flag, String id, List<String> vipFlags) {
-        String webUrl = rule.getPlayUrl().isEmpty() ? id : rule.getPlayUrl().replace("{playUrl}", id);
-        SpiderDebug.log(webUrl);
-        HashMap<String, String> headers = new HashMap<>();
-        if (rule.getPlayUa().length() > 0) headers.put("User-Agent", rule.getPlayUa());
-        if (rule.getPlayReferer().length() > 0) headers.put("Referer", rule.getPlayReferer());
-        return Result.get().parse().url(webUrl).header(headers).string();
-    }
-
-    @Override
-    public String searchContent(String key, boolean quick) throws JSONException {
-        if (rule.getSearchUrl().isEmpty()) return "";
-        String webUrl = rule.getSearchUrl().replace("{wd}", URLEncoder.encode(key));
-        String webContent = fetch(webUrl);
-        List<Vod> list = new ArrayList<>();
-        if (rule.getSearchVodNode().startsWith("json:")) {
-            String[] node = rule.getSearchVodNode().substring(5).split(">");
-            JSONObject data = new JSONObject(webContent);
-            for (int i = 0; i < node.length; i++) {
-                if (i == node.length - 1) {
-                    JSONArray vodArray = data.getJSONArray(node[i]);
-                    for (int j = 0; j < vodArray.length(); j++) {
-                        JSONObject vod = vodArray.getJSONObject(j);
-                        String name = vod.optString(rule.getSearchVodName()).trim();
-                        name = rule.getSearchVodNameR(name);
-                        String id = vod.optString(rule.getSearchVodId()).trim();
-                        id = rule.getSearchVodIdR(id);
-                        String pic = vod.optString(rule.getSearchVodImg()).trim();
-                        pic = rule.getSearchVodImgR(pic);
-                        pic = Misc.fixUrl(webUrl, pic);
-                        String mark = vod.optString(rule.getSearchVodMark()).trim();
-                        mark = rule.getSearchVodMarkR(mark);
-                        list.add(new Vod(id, name, pic, mark));
-                    }
-                } else {
-                    data = data.getJSONObject(node[i]);
-                }
-            }
-        } else {
-            JXDocument doc = JXDocument.create(webContent);
-            List<JXNode> vodNodes = doc.selN(rule.getSearchVodNode());
+            JSONArray videos = new JSONArray();
+            if (!webUrl.contains("post")){
+            String webContent = fetch(webUrl);
+            //getjson模式
+            if (rule.getCateVodNode().startsWith("json:"))
+            {
+               //判断webcontent是否需要正则
+               //这里也可用getcatevodnode加关键字再次判断
+				if (rule.getCateVodNode().contains("JsonR")){
+               
+               webContent = rule.getCateVodJsonR(webContent);
+               }               
+                        JSONArray vodArray = new JSONArray(webContent);
+                        int j =0;
+                        for (int i = 0; i < vodArray.length(); i++) {
+                        JSONObject vod =new JSONObject(vodArray.get(j).toString());
+	                         j = j +1 ;
+                            
+                            String name = vod.optString(rule.getCateVodName()).trim();
+                            name = rule.getSearchVodNameR(name);
+                            String id = vod.optString(rule.getCateVodId()).trim();
+                            id = rule.getCateVodIdR(id);
+                            String pic = vod.optString(rule.getCateVodImg()).trim();
+                            pic = rule.getCateVodImgR(pic);
+                            pic = Misc.fixUrl(webUrl, pic);
+							String mark = "";
+							if (!rule.getCateVodMark().isEmpty()) {
+								try {
+                            mark = vod.optString(rule.getCateVodMark()).trim();
+                            mark = rule.getCateVodMarkR(mark);
+							}
+								catch (Exception e) {
+									SpiderDebug.log(e);
+								}
+							}
+                            JSONObject v = new JSONObject();
+                            v.put("vod_id", id);
+                            v.put("vod_name", name);
+                            v.put("vod_pic", pic);
+                            v.put("vod_remarks", mark);
+                            videos.put(v);
+            }}
+            //节点截取模式
+            else{
+            JXDocument doc = JXDocument.create(fetch(webUrl));
+            List<JXNode> vodNodes = doc.selN(rule.getCateVodNode());
             for (int i = 0; i < vodNodes.size(); i++) {
-                String name = vodNodes.get(i).selOne(rule.getSearchVodName()).asString().trim();
-                name = rule.getSearchVodNameR(name);
-                String id = vodNodes.get(i).selOne(rule.getSearchVodId()).asString().trim();
-                id = rule.getSearchVodIdR(id);
-                String pic = vodNodes.get(i).selOne(rule.getSearchVodImg()).asString().trim();
-                pic = rule.getSearchVodImgR(pic);
+                String name = vodNodes.get(i).selOne(rule.getCateVodName()).asString().trim();
+                name = rule.getCateVodNameR(name);
+                String id = vodNodes.get(i).selOne(rule.getCateVodId()).asString().trim();
+                id = rule.getCateVodIdR(id);
+                String pic = vodNodes.get(i).selOne(rule.getCateVodImg()).asString().trim();
+                pic = rule.getCateVodImgR(pic);
                 pic = Misc.fixUrl(webUrl, pic);
                 String mark = "";
                 if (!rule.getCateVodMark().isEmpty()) {
                     try {
-                        mark = vodNodes.get(i).selOne(rule.getSearchVodMark()).asString().trim();
-                        mark = rule.getSearchVodMarkR(mark);
+                        mark = vodNodes.get(i).selOne(rule.getCateVodMark()).asString().trim();
+                        mark = rule.getCateVodMarkR(mark);
                     } catch (Exception e) {
                         SpiderDebug.log(e);
                     }
                 }
-                list.add(new Vod(id, name, pic, mark));
+                JSONObject v = new JSONObject();
+                v.put("vod_id", id);
+                v.put("vod_name", name);
+                v.put("vod_pic", pic);
+                v.put("vod_remarks", mark);
+                videos.put(v);
+            }
+            }
+            }
+            //postjson模式
+            //else{
+            //post获取数据
+            //是否含有加密请求方式，加密运算结果
+           // }
+            
+                                               
+            JSONObject result = new JSONObject();
+            result.put("page", pg);
+            result.put("pagecount", pageCount);
+            result.put("limit", 90);
+            result.put("total", Integer.MAX_VALUE);
+            result.put("list", videos);
+            return result.toString();
+        } catch (Exception e) {
+            SpiderDebug.log(e);
+        }
+        return "";
+    }
+
+    protected void detailContentExt(String content, JSONObject vod) {
+
+    }
+
+    @Override
+    public String detailContent(List<String> ids) {
+        try {
+            fetchRule();
+            String webUrl = rule.getDetailUrl().replace("{vid}", ids.get(0));
+            String webContent = fetch(webUrl);
+            JXDocument doc = JXDocument.create(webContent);
+            JXNode vodNode = doc.selNOne(rule.getDetailNode());
+
+            String cover = "", title = "", desc = "", category = "", area = "", year = "", remark = "", director = "", actor = "";
+
+            title = vodNode.selOne(rule.getDetailName()).asString().trim();
+            title = rule.getDetailNameR(title);
+
+            cover = vodNode.selOne(rule.getDetailImg()).asString().trim();
+            cover = rule.getDetailImgR(cover);
+            cover = Misc.fixUrl(webUrl, cover);
+
+            if (!rule.getDetailCate().isEmpty()) {
+                try {
+                    category = vodNode.selOne(rule.getDetailCate()).asString().trim();
+                    category = rule.getDetailCateR(category);
+                } catch (Exception e) {
+                    SpiderDebug.log(e);
+                }
+            }
+            if (!rule.getDetailYear().isEmpty()) {
+                try {
+                    year = vodNode.selOne(rule.getDetailYear()).asString().trim();
+                    year = rule.getDetailYearR(year);
+                } catch (Exception e) {
+                    SpiderDebug.log(e);
+                }
+            }
+            if (!rule.getDetailArea().isEmpty()) {
+                try {
+                    area = vodNode.selOne(rule.getDetailArea()).asString().trim();
+                    area = rule.getDetailAreaR(area);
+                } catch (Exception e) {
+                    SpiderDebug.log(e);
+                }
+            }
+            if (!rule.getDetailMark().isEmpty()) {
+                try {
+                    remark = vodNode.selOne(rule.getDetailMark()).asString().trim();
+                    remark = rule.getDetailMarkR(remark);
+                } catch (Exception e) {
+                    SpiderDebug.log(e);
+                }
+            }
+            if (!rule.getDetailActor().isEmpty()) {
+                try {
+                    actor = vodNode.selOne(rule.getDetailActor()).asString().trim();
+                    actor = rule.getDetailActorR(actor);
+                } catch (Exception e) {
+                    SpiderDebug.log(e);
+                }
+            }
+            if (!rule.getDetailDirector().isEmpty()) {
+                try {
+                    director = vodNode.selOne(rule.getDetailDirector()).asString().trim();
+                    director = rule.getDetailDirectorR(director);
+                } catch (Exception e) {
+                    SpiderDebug.log(e);
+                }
+            }
+            if (!rule.getDetailDesc().isEmpty()) {
+                try {
+                    desc = vodNode.selOne(rule.getDetailDesc()).asString().trim();
+                    desc = rule.getDetailDescR(desc);
+                } catch (Exception e) {
+                    SpiderDebug.log(e);
+                }
+            }
+
+            JSONObject vod = new JSONObject();
+            vod.put("vod_id", ids.get(0));
+            vod.put("vod_name", title);
+            vod.put("vod_pic", cover);
+            vod.put("type_name", category);
+            vod.put("vod_year", year);
+            vod.put("vod_area", area);
+            vod.put("vod_remarks", remark);
+            vod.put("vod_actor", actor);
+            vod.put("vod_director", director);
+            vod.put("vod_content", desc);
+
+            ArrayList<String> playFrom = new ArrayList<>();
+
+            List<JXNode> fromNodes = doc.selN(rule.getDetailFromNode());
+            for (int i = 0; i < fromNodes.size(); i++) {
+           
+                String name = fromNodes.get(i).selOne(rule.getDetailFromName()).asString().trim();
+                name = rule.getDetailFromNameR(name);
+                playFrom.add(name);
+            }
+            ArrayList<String> playList = new ArrayList<>();
+            //判断urlnode是否含有json字段
+            if (rule.getDetailUrlNode().startsWith("json:")){
+            String webUrl2 = rule.getDetailUrl2().replace("{vid}", ids.get(0));
+            String webContent2 = fetch(webUrl2);
+              //继续判断urlnode是否含有JsonR字段
+              if (rule.getDetailUrlNode().contains("JsonR")){
+                webContent2 = rule.getDetailUrlJsonR(webContent2);
+               }
+               JSONArray detailurlArray = new JSONArray(webContent2);
+               
+                for (int i = 0; i < fromNodes.size(); i++) {
+                        int k =0;
+				       List<String> vodItems = new ArrayList<>();
+                        for (int j = 0; j < detailurlArray.length(); j++) {
+                        JSONObject detailurl =new JSONObject(detailurlArray.get(k).toString());
+							
+	                         k = k +1 ;
+                            
+                            String name = detailurl.optString(rule.getDetailUrlName()).trim();
+                            name = rule.getDetailUrlNameR(name);
+                            String id = detailurl.optString(rule.getDetailUrlId()).trim();
+                            id = rule.getDetailUrlIdR(id);
+                            vodItems.add(name + "$" + id);
+                            }
+							if (vodItems.size() == 0 && playFrom.size() > i) {
+								playFrom.set(i, "");
+							}
+							playList.add(TextUtils.join("#", vodItems));
+                           
+							}
+                
+            
+            // 排除播放列表为空的播放源
+            for (int i = playFrom.size() - 1; i >= 0; i--) {
+                if (playFrom.get(i).isEmpty())
+                    playFrom.remove(i);
+            }
+            for (int i = playList.size() - 1; i >= 0; i--) {
+                if (playList.get(i).isEmpty())
+                    playList.remove(i);
+            }
+            for (int i = playList.size() - 1; i >= 0; i--) {
+                if (i >= playFrom.size())
+                    playList.remove(i);
+            }
+            String vod_play_from = TextUtils.join("$$$", playFrom);
+            String vod_play_url = TextUtils.join("$$$", playList);
+            vod.put("vod_play_from", vod_play_from);
+            vod.put("vod_play_url", vod_play_url);
+            detailContentExt(webContent, vod);
+            JSONObject result = new JSONObject();
+            JSONArray list = new JSONArray();
+            list.put(vod);
+            result.put("list", list);
+            return result.toString();
+            }else {
+               
+               
+               
+               
+               
+               
+               
+            List<JXNode> urlListNodes = doc.selN(rule.getDetailUrlNode());
+            for (int i = 0; i < urlListNodes.size(); i++) {
+                List<JXNode> urlNodes = urlListNodes.get(i).sel(rule.getDetailUrlSubNode());
+                List<String> vodItems = new ArrayList<>();
+                for (int j = 0; j < urlNodes.size(); j++) {
+                    String name = urlNodes.get(j).selOne(rule.getDetailUrlName()).asString().trim();
+                    name = rule.getDetailUrlNameR(name);
+                    String id = urlNodes.get(j).selOne(rule.getDetailUrlId()).asString().trim();
+                    id = rule.getDetailUrlIdR(id);
+                    vodItems.add(name + "$" + id);
+                }
+                // 排除播放列表为空的播放源
+                if (vodItems.size() == 0 && playFrom.size() > i) {
+                    playFrom.set(i, "");
+                }
+                playList.add(TextUtils.join("#", vodItems));
+            }
+            // 排除播放列表为空的播放源
+            for (int i = playFrom.size() - 1; i >= 0; i--) {
+                if (playFrom.get(i).isEmpty())
+                    playFrom.remove(i);
+            }
+            for (int i = playList.size() - 1; i >= 0; i--) {
+                if (playList.get(i).isEmpty())
+                    playList.remove(i);
+            }
+            for (int i = playList.size() - 1; i >= 0; i--) {
+                if (i >= playFrom.size())
+                    playList.remove(i);
+            }
+            String vod_play_from = TextUtils.join("$$$", playFrom);
+            String vod_play_url = TextUtils.join("$$$", playList);
+            vod.put("vod_play_from", vod_play_from);
+            vod.put("vod_play_url", vod_play_url);
+
+            detailContentExt(webContent, vod);
+
+            JSONObject result = new JSONObject();
+            JSONArray list = new JSONArray();
+            list.put(vod);
+            result.put("list", list);
+            return result.toString();
+        } }catch (Exception e) {
+            SpiderDebug.log(e);
+        }
+        return "";
+    }
+
+    @Override
+    public String playerContent(String flag, String id, List<String> vipFlags) {
+        try {
+            fetchRule();
+            String webUrl = rule.getPlayUrl().isEmpty() ? id : rule.getPlayUrl().replace("{playUrl}", id);
+            SpiderDebug.log(webUrl);
+            JSONObject result = new JSONObject();
+            result.put("parse", 1);
+            result.put("playUrl", "");
+            if (!rule.getPlayUa().isEmpty()) {
+                result.put("header", rule.getPlayUa());
+            }
+            result.put("url", webUrl);
+            return result.toString();
+        } catch (Exception e) {
+            SpiderDebug.log(e);
+        }
+        return "";
+    }
+
+    @Override
+    public String searchContent(String key, boolean quick)  {
+        try {
+            fetchRule();
+            if (rule.getSearchUrl().isEmpty()) {
+                return "";
+            }
+             JSONObject result = new JSONObject();
+            JSONArray videos = new JSONArray();
+            	if (!rule.getPoBody().isEmpty()){String webUrl = rule.getSearchUrl();
+				URL url = new URL(webUrl);
+        
+        HttpURLConnection conn =  (HttpURLConnection)url.openConnection();
+		conn.setRequestProperty("User-Agent","Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.54 Safari/537.36");
+        conn.setDoOutput(true);
+		conn.setDoInput(true);
+		conn.setRequestMethod("POST");
+		String params = rule.getPoBody() + URLEncoder.encode(key);
+		OutputStream out = conn.getOutputStream();
+		out.write(params.getBytes());
+		out.flush();
+		out.close();
+		InputStream in=conn.getInputStream();
+        BufferedReader reader = new BufferedReader(
+			new InputStreamReader(in));
+        String line;
+        String html = "";
+        while ((line = reader.readLine()) != null) {
+            html +=  line;
+        }
+        JXDocument doc = JXDocument.create(html);
+                List<JXNode> vodNodes = doc.selN(rule.getSearchVodNode());
+                for (int i = 0; i < vodNodes.size(); i++) {
+                    String name = vodNodes.get(i).selOne(rule.getSearchVodName()).asString().trim();
+                    name = rule.getSearchVodNameR(name);
+                    String id = vodNodes.get(i).selOne(rule.getSearchVodId()).asString().trim();
+                    id = rule.getSearchVodIdR(id);
+                    String pic = vodNodes.get(i).selOne(rule.getSearchVodImg()).asString().trim();
+                    pic = rule.getSearchVodImgR(pic);
+                    pic = Misc.fixUrl(webUrl, pic);
+                    String mark = "";
+                    if (!rule.getCateVodMark().isEmpty()) {
+                        try {
+                            mark = vodNodes.get(i).selOne(rule.getSearchVodMark()).asString().trim();
+                            mark = rule.getSearchVodMarkR(mark);
+                        } catch (Exception e) {
+                            SpiderDebug.log(e);
+                        }
+                    }
+                    JSONObject v = new JSONObject();
+                    v.put("vod_id", id);
+                    v.put("vod_name", name);
+                    v.put("vod_pic", pic);
+                    v.put("vod_remarks", mark);
+                    videos.put(v);
+				
+				}}else{
+            String webUrl = rule.getSearchUrl().replace("{wd}", URLEncoder.encode(key));
+            String webContent = fetch(webUrl);
+           
+            // add maccms suggest search api support
+            if (rule.getSearchVodNode().startsWith("json:")) {
+                String[] node = rule.getSearchVodNode().substring(5).split(">");
+                JSONObject data = new JSONObject(webContent);
+                for (int i = 0; i < node.length; i++) {
+                    if (i == node.length - 1) {
+                        JSONArray vodArray = data.getJSONArray(node[i]);
+                        for (int j = 0; j < vodArray.length(); j++) {
+                            JSONObject vod = vodArray.getJSONObject(j);
+                            String name = vod.optString(rule.getSearchVodName()).trim();
+                            name = rule.getSearchVodNameR(name);
+                            String id = vod.optString(rule.getSearchVodId()).trim();
+                            id = rule.getSearchVodIdR(id);
+                            String pic = vod.optString(rule.getSearchVodImg()).trim();
+                            pic = rule.getSearchVodImgR(pic);
+                            pic = Misc.fixUrl(webUrl, pic);
+                            String mark = vod.optString(rule.getSearchVodMark()).trim();
+                            mark = rule.getSearchVodMarkR(mark);
+                            JSONObject v = new JSONObject();
+                            v.put("vod_id", id);
+                            v.put("vod_name", name);
+                            v.put("vod_pic", pic);
+                            v.put("vod_remarks", mark);
+                            videos.put(v);
+                        }
+                    } else {
+                        data = data.getJSONObject(node[i]);
+                    }
+                }
+            } else {
+                JXDocument doc = JXDocument.create(webContent);
+                List<JXNode> vodNodes = doc.selN(rule.getSearchVodNode());
+                for (int i = 0; i < vodNodes.size(); i++) {
+                    String name = vodNodes.get(i).selOne(rule.getSearchVodName()).asString().trim();
+                    name = rule.getSearchVodNameR(name);
+                    String id = vodNodes.get(i).selOne(rule.getSearchVodId()).asString().trim();
+                    id = rule.getSearchVodIdR(id);
+                    String pic = vodNodes.get(i).selOne(rule.getSearchVodImg()).asString().trim();
+                    pic = rule.getSearchVodImgR(pic);
+                    pic = Misc.fixUrl(webUrl, pic);
+                    String mark = "";
+                    if (!rule.getCateVodMark().isEmpty()) {
+                        try {
+                            mark = vodNodes.get(i).selOne(rule.getSearchVodMark()).asString().trim();
+                            mark = rule.getSearchVodMarkR(mark);
+                        } catch (Exception e) {
+                            SpiderDebug.log(e);
+                        }
+                    }
+                    JSONObject v = new JSONObject();
+                    v.put("vod_id", id);
+                    v.put("vod_name", name);
+                    v.put("vod_pic", pic);
+                    v.put("vod_remarks", mark);
+                    videos.put(v);
+                }
+            }}
+            result.put("list", videos);
+            return result.toString();
+        } catch (
+                Exception e) {
+            SpiderDebug.log(e);
+        }
+        return "";
+    }
+
+    @Override
+    public boolean manualVideoCheck() {
+        return false;
+    }
+
+    private String[] videoFormatList = new String[]{".m3u8", ".mp4", ".mpeg", ".flv"};
+
+    @Override
+    public boolean isVideoFormat(String url) {
+        url = url.toLowerCase();
+        if (url.contains("=http") || url.contains("=https") || url.contains("=https%3a%2f") || url.contains("=http%3a%2f")) {
+            return false;
+        }
+        for (String format : videoFormatList) {
+            if (url.contains(format)) {
+                return true;
             }
         }
-        return Result.string(list);
+        return false;
+    }
+
+    protected String ext = null;
+    protected XPathRule rule = null;
+
+    protected void fetchRule() {
+        if (rule == null) {
+            if (ext != null) {
+                if (ext.startsWith("http")) {
+                    String json = OkHttpUtil.string(ext, null);
+                    rule = XPathRule.fromJson(json);
+                    loadRuleExt(json);
+                } else {
+                    rule = XPathRule.fromJson(ext);
+                    loadRuleExt(ext);
+                }
+            }
+        }
     }
 
     protected void loadRuleExt(String json) {
+
     }
 
     protected String fetch(String webUrl) {
         SpiderDebug.log(webUrl);
-        return OkHttp.string(webUrl, getHeaders());
+        return OkHttpUtil.string(webUrl, getHeaders(webUrl));
     }
 }

@@ -1,35 +1,36 @@
 package com.github.catvod.spider;
 
+import com.github.catvod.crawler.Spider;
+import com.github.catvod.crawler.SpiderDebug;
+import com.github.catvod.utils.Misc;
+import com.github.catvod.utils.okhttp.OkHttpUtil;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.net.URLEncoder;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-
-import java.security.MessageDigest;
-
-import com.github.catvod.utils.Misc;
-import com.github.catvod.utils.okhttp.OkHttpUtil;
-
-import com.github.catvod.crawler.Spider;
-import com.github.catvod.crawler.SpiderDebug;
+import java.util.Set;
 
 public class Kunyu77 extends Spider {
     private static final String siteUrl = "https://api.kunyu77.com";
 
-    protected HashMap<String, String> getHeaders1(String t, String str) {
+    protected HashMap<String, String> getHeaders1(String time, String str) {
         HashMap<String, String> headers = new HashMap<>();
         headers.put("User-Agent", "Dalvik/2.1.0 (Linux; U; Android 11; M2012K11AC Build/RKQ1.200826.002)");
-        headers.put("t", t);
+        headers.put("t", time);
         headers.put("TK", getMd5(str));
         return headers;
     }
 
-    protected HashMap<String, String> getHeaders(String t, String str) {
+    protected HashMap<String, String> getHeaders(String time, String str) {
         HashMap<String, String> headers = new HashMap<>();
         headers.put("User-Agent", "okhttp/3.12.0");
-        headers.put("t", t);
+        headers.put("t", time);
         headers.put("TK", getMd5(str));
         return headers;
     }
@@ -73,13 +74,44 @@ public class Kunyu77 extends Spider {
         }
         return "";
     }
-
+    @Override
     public String categoryContent(String tid, String pg, boolean filter, HashMap<String, String> extend) {
         try {
-            String url = "http://api.kunyu77.com/api.php/provide/searchFilter?type_id=" + tid
-                    + "&pagesize=24&pagenum=1&year=&category=&area=";
-        } catch (Exception e) {
-            SpiderDebug.log(e);
+            String url = siteUrl + "/api.php/provide/searchFilter?type_id=" + tid + "&pagenum=" + pg + "&pagesize=24";
+            Set<String> keys = extend.keySet();
+            for (String key : keys) {
+                String val = extend.get(key).trim();
+                if (val.length() == 0)
+                    continue;
+                url += "&" + key + "=" + URLEncoder.encode(val);
+            }
+            String time = String.valueOf(System.currentTimeMillis() / 1000L);
+            String content = OkHttpUtil.string(url, getHeaders(time,url));
+            JSONObject dataObject = new JSONObject(content).getJSONObject("data");
+            JSONArray jsonArray = dataObject.getJSONArray("result");
+            JSONArray videos = new JSONArray();
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject vObj = jsonArray.getJSONObject(i);
+                JSONObject v = new JSONObject();
+                v.put("vod_id", vObj.getString("id"));
+                v.put("vod_name", vObj.getString("title"));
+                v.put("vod_pic", vObj.getString("videoCover"));
+                v.put("vod_remarks", vObj.getString("msg"));
+                videos.put(v);
+            }
+            JSONObject result = new JSONObject();
+            int limit = 24;
+            int page = Integer.parseInt(dataObject.getString("page"));
+            int total = dataObject.getInt("total");
+            int pageCount = dataObject.getInt("pagesize");
+            result.put("page", page);
+            result.put("pagecount", pageCount);
+            result.put("limit", limit);
+            result.put("total", total);
+            result.put("list", videos);
+            return result.toString();
+        } catch (Throwable th) {
+
         }
         return "";
     }
@@ -100,12 +132,12 @@ public class Kunyu77 extends Spider {
             StringBuilder stringBuilder = new StringBuilder();
             stringBuilder.append("http://api.kunyu77.com/api.php/provide/videoDetail");
             stringBuilder.append(str7);
-            stringBuilder.append((String) ids.get(0));
+            stringBuilder.append( ids.get(0));
             stringBuilder.append(str6);
             stringBuilder.append(t);
             StringBuilder stringBuilder3 = new StringBuilder();
             stringBuilder3.append("/api.php/provide/videoDetailrealme4ac3fe96a6133de96904b8d3c8cfe16d");
-            stringBuilder3.append((String) ids.get(0));
+            stringBuilder3.append( ids.get(0));
             stringBuilder3.append(str5);
             stringBuilder3.append(t);
             stringBuilder3.append(str4);
@@ -140,7 +172,7 @@ public class Kunyu77 extends Spider {
 
             StringBuilder stringBuilder5 = new StringBuilder();
             stringBuilder5.append("/api.php/provide/videoPlaylistrealme4ac3fe96a6133de96904b8d3c8cfe16d");
-            stringBuilder5.append((String) ids.get(0));
+            stringBuilder5.append( ids.get(0));
             stringBuilder5.append("RMX1931com.sevenVideo.app.android010110002");
             stringBuilder5.append(t);
             stringBuilder5.append("android7.1.22.0.4");
@@ -275,6 +307,9 @@ public class Kunyu77 extends Spider {
         return "";
     }
 
+    public String homeVideoContent() {
+        return "";
+    }
     public String playerContent(String flag, String id, List<String> vipFlags) {
         try {
             if (Misc.isVip(id)) {

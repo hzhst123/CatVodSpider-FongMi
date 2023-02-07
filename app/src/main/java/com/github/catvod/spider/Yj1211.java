@@ -4,17 +4,17 @@ package com.github.catvod.spider;
 import android.content.Context;
 import android.text.TextUtils;
 
-import java.net.URLEncoder;
-import java.util.Iterator;
-
-
 import com.github.catvod.crawler.Spider;
 import com.github.catvod.crawler.SpiderDebug;
 import com.github.catvod.utils.okhttp.OkHttpUtil;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;

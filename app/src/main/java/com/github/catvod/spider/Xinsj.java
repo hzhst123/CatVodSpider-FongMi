@@ -2,10 +2,10 @@ package com.github.catvod.spider;
 
 import android.content.Context;
 import android.text.TextUtils;
-import android.util.Base64;
 
 import com.github.catvod.crawler.Spider;
 import com.github.catvod.crawler.SpiderDebug;
+import com.github.catvod.utils.Misc;
 import com.github.catvod.utils.okhttp.OKCallBack;
 import com.github.catvod.utils.okhttp.OkHttpUtil;
 
@@ -21,8 +21,8 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -33,9 +33,7 @@ import okhttp3.Call;
 
 
 public class Xinsj extends Spider {
-    private static final String siteUrl = "https://www.6080dy2.com";
-    private static final String siteHost = "www.6080dy2.com";
-
+    private static String siteUrl = "";
     /**
      * 播放源配置
      */
@@ -50,10 +48,11 @@ public class Xinsj extends Spider {
     private Pattern regexPage = Pattern.compile("/vodshow/(\\S+).html");
 
     @Override
-    public void init(Context context) {
+    public void init(Context context,String extend) {
         super.init(context);
+        siteUrl = extend;
         try {
-            playerConfig = new JSONObject("{\"lgzx\":{\"show\":\"蓝光专享2\",\"des\":\"\",\"ps\":\"0\",\"parse\":\"https://jx2.idcdr.com/m3u81/?url=\"},\"6080_\":{\"show\":\"蓝光专享\",\"des\":\"\",\"ps\":\"0\",\"parse\":\"https://jx2.idcdr.com/m3u81/?url=\"},\"ffm3u8\":{\"show\":\"极速-01\",\"des\":\"\",\"ps\":\"0\",\"parse\":\"https://jx1.idcdr.com/player/?url=\"},\"lg1\":{\"show\":\"蓝光专线⑥\",\"des\":\"\",\"ps\":\"0\",\"parse\":\"https://jx1.idcdr.com/m3u8/?url=\"},\"1080zyk\":{\"show\":\"极速播放\",\"des\":\"\",\"ps\":\"0\",\"parse\":\"https://jx1.idcdr.com/player/?url=\"},\"lg\":{\"show\":\"蓝光专线⑤\",\"des\":\"\",\"ps\":\"0\",\"parse\":\"https://jx1.idcdr.com/m3u8/?url=\"},\"qq\":{\"show\":\"TX节点\",\"des\":\"\",\"ps\":\"1\",\"parse\":\"https://jx1.idcdr.com/player/?url=\"},\"sohu\":{\"show\":\"搜狐\",\"des\":\"\",\"ps\":\"1\",\"parse\":\"https://jx1.idcdr.com/111/444\\/?url=\"},\"youku\":{\"show\":\"YK节点\",\"des\":\"\",\"ps\":\"1\",\"parse\":\"https://jx1.idcdr.com/player/?url=\"},\"bilibili\":{\"show\":\"bilibili\",\"des\":\"\",\"ps\":\"1\",\"parse\":\"https://jx1.idcdr.com/111/444/?url=\"},\"qiyi\":{\"show\":\"QY节点\",\"des\":\"\",\"ps\":\"1\",\"parse\":\"https://jx1.idcdr.com/player/?url=\"},\"BYGA\":{\"show\":\"蓝光专线①\",\"des\":\"\",\"ps\":\"0\",\"parse\":\"https://jx1.idcdr.com/m3u8/?url=\"},\"xigua\":{\"show\":\"西瓜视频\",\"des\":\"\",\"ps\":\"1\",\"parse\":\"https://jx1.idcdr.com/111/444/?url=\"},\"lzm3u8\":{\"show\":\"在线观看\",\"des\":\"\",\"ps\":\"0\",\"parse\":\"https://jx1.idcdr.com/player/?url=\"}}");
+            playerConfig = new JSONObject("{\"lgzx1\":{\"show\":\"蓝光专享1\",\"des\":\"\",\"ps\":\"0\",\"parse\":\"https://jx2.idcdr.com/m3u81/?url=\"},\"lgzx\":{\"show\":\"蓝光专享2\",\"des\":\"\",\"ps\":\"0\",\"parse\":\"https://jx2.idcdr.com/m3u81/?url=\"},\"6080_\":{\"show\":\"蓝光专享\",\"des\":\"\",\"ps\":\"0\",\"parse\":\"https://jx2.idcdr.com/m3u81/?url=\"},\"ffm3u8\":{\"show\":\"极速-01\",\"des\":\"\",\"ps\":\"0\",\"parse\":\"https://jx1.idcdr.com/player/?url=\"},\"lg1\":{\"show\":\"蓝光专线⑥\",\"des\":\"\",\"ps\":\"0\",\"parse\":\"https://jx1.idcdr.com/m3u8/?url=\"},\"1080zyk\":{\"show\":\"极速播放\",\"des\":\"\",\"ps\":\"0\",\"parse\":\"https://jx1.idcdr.com/player/?url=\"},\"lg\":{\"show\":\"蓝光专线⑤\",\"des\":\"\",\"ps\":\"0\",\"parse\":\"https://jx1.idcdr.com/m3u8/?url=\"},\"qq\":{\"show\":\"TX节点\",\"des\":\"\",\"ps\":\"1\",\"parse\":\"https://jx1.idcdr.com/player/?url=\"},\"sohu\":{\"show\":\"搜狐\",\"des\":\"\",\"ps\":\"1\",\"parse\":\"https://jx1.idcdr.com/111/444\\/?url=\"},\"youku\":{\"show\":\"YK节点\",\"des\":\"\",\"ps\":\"1\",\"parse\":\"https://jx1.idcdr.com/player/?url=\"},\"bilibili\":{\"show\":\"bilibili\",\"des\":\"\",\"ps\":\"1\",\"parse\":\"https://jx1.idcdr.com/111/444/?url=\"},\"qiyi\":{\"show\":\"QY节点\",\"des\":\"\",\"ps\":\"1\",\"parse\":\"https://jx1.idcdr.com/player/?url=\"},\"BYGA\":{\"show\":\"蓝光专线①\",\"des\":\"\",\"ps\":\"0\",\"parse\":\"https://jx1.idcdr.com/m3u8/?url=\"},\"xigua\":{\"show\":\"西瓜视频\",\"des\":\"\",\"ps\":\"1\",\"parse\":\"https://jx1.idcdr.com/111/444/?url=\"},\"lzm3u8\":{\"show\":\"在线观看\",\"des\":\"\",\"ps\":\"0\",\"parse\":\"https://jx1.idcdr.com/player/?url=\"}}");
             filterConfig = new JSONObject("{\"1\":[{\"key\":0,\"name\":\"分类\",\"value\":[{\"n\":\"全部\",\"v\":\"4\"},{\"n\":\"动作片\",\"v\":\"6\"},{\"n\":\"喜剧\",\"v\":\"7\"},{\"n\":\"爱情\",\"v\":\"8\"},{\"n\":\"科幻\",\"v\":\"9\"},{\"n\":\"恐怖\",\"v\":\"10\"},{\"n\":\"剧情\",\"v\":\"11\"},{\"n\":\"战争\",\"v\":\"12\"},{\"n\":\"动画\",\"v\":\"23\"}]},{\"key\":3,\"name\":\"剧情\",\"value\":[{\"n\":\"全部\",\"v\":\"\"},{\"n\":\"警匪\",\"v\":\"警匪\"},{\"n\":\"犯罪\",\"v\":\"犯罪\"},{\"n\":\"动画\",\"v\":\"动画\"},{\"n\":\"奇幻\",\"v\":\"奇幻\"},{\"n\":\"武侠\",\"v\":\"武侠\"},{\"n\":\"冒险\",\"v\":\"冒险\"},{\"n\":\"枪战\",\"v\":\"枪战\"},{\"n\":\"恐怖\",\"v\":\"恐怖\"},{\"n\":\"悬疑\",\"v\":\"悬疑\"},{\"n\":\"惊悚\",\"v\":\"惊悚\"},{\"n\":\"经典\",\"v\":\"经典\"},{\"n\":\"青春\",\"v\":\"青春\"},{\"n\":\"文艺\",\"v\":\"文艺\"},{\"n\":\"微电影\",\"v\":\"微电影\"},{\"n\":\"古装\",\"v\":\"古装\"},{\"n\":\"历史\",\"v\":\"历史\"},{\"n\":\"运动\",\"v\":\"运动\"},{\"n\":\"农村\",\"v\":\"农村\"},{\"n\":\"儿童\",\"v\":\"儿童\"},{\"n\":\"网络电影\",\"v\":\"网络电影\"}]},{\"key\":1,\"name\":\"地区\",\"value\":[{\"n\":\"全部\",\"v\":\"\"},{\"n\":\"中国大陆\",\"v\":\"中国大陆\"},{\"n\":\"中国香港\",\"v\":\"中国香港\"},{\"n\":\"中国台湾\",\"v\":\"中国台湾\"},{\"n\":\"韩国\",\"v\":\"韩国\"},{\"n\":\"日本\",\"v\":\"日本\"},{\"n\":\"美国\",\"v\":\"美国\"},{\"n\":\"法国\",\"v\":\"法国\"},{\"n\":\"英国\",\"v\":\"英国\"},{\"n\":\"德国\",\"v\":\"德国\"},{\"n\":\"泰国\",\"v\":\"泰国\"},{\"n\":\"新加坡\",\"v\":\"新加坡\"},{\"n\":\"马来西亚\",\"v\":\"马来西亚\"},{\"n\":\"印度\",\"v\":\"印度\"},{\"n\":\"法国\",\"v\":\"法国\"},{\"n\":\"英国\",\"v\":\"英国\"},{\"n\":\"德国\",\"v\":\"德国\"},{\"n\":\"意大利\",\"v\":\"意大利\"},{\"n\":\"西班牙\",\"v\":\"西班牙\"},{\"n\":\"加拿大\",\"v\":\"加拿大\"},{\"n\":\"其他\",\"v\":\"其他\"}]},{\"key\":11,\"name\":\"年份\",\"value\":[{\"n\":\"全部\",\"v\":\"\"},{\"n\":\"2022\",\"v\":\"2022\"},{\"n\":\"2021\",\"v\":\"2021\"},{\"n\":\"2020\",\"v\":\"2020\"},{\"n\":\"2019\",\"v\":\"2019\"},{\"n\":\"2018\",\"v\":\"2018\"},{\"n\":\"2017\",\"v\":\"2017\"},{\"n\":\"2016\",\"v\":\"2016\"},{\"n\":\"2015\",\"v\":\"2015\"},{\"n\":\"2014\",\"v\":\"2014\"},{\"n\":\"2013\",\"v\":\"2013\"},{\"n\":\"2012\",\"v\":\"2012\"},{\"n\":\"2011\",\"v\":\"2011\"},{\"n\":\"2010\",\"v\":\"2010\"}]},{\"key\":4,\"name\":\"语言\",\"value\":[{\"n\":\"全部\",\"v\":\"\"},{\"n\":\"国语\",\"v\":\"国语\"},{\"n\":\"英语\",\"v\":\"英语\"},{\"n\":\"粤语\",\"v\":\"粤语\"},{\"n\":\"闽南语\",\"v\":\"闽南语\"},{\"n\":\"韩语\",\"v\":\"韩语\"},{\"n\":\"日语\",\"v\":\"日语\"},{\"n\":\"其它\",\"v\":\"其它\"}]},{\"key\":5,\"name\":\"字母\",\"value\":[{\"n\":\"全部\",\"v\":\"\"},{\"n\":\"A\",\"v\":\"A\"},{\"n\":\"B\",\"v\":\"B\"},{\"n\":\"C\",\"v\":\"C\"},{\"n\":\"D\",\"v\":\"D\"},{\"n\":\"E\",\"v\":\"E\"},{\"n\":\"F\",\"v\":\"F\"},{\"n\":\"G\",\"v\":\"G\"},{\"n\":\"H\",\"v\":\"H\"},{\"n\":\"I\",\"v\":\"I\"},{\"n\":\"J\",\"v\":\"J\"},{\"n\":\"K\",\"v\":\"K\"},{\"n\":\"L\",\"v\":\"L\"},{\"n\":\"M\",\"v\":\"M\"},{\"n\":\"N\",\"v\":\"N\"},{\"n\":\"O\",\"v\":\"O\"},{\"n\":\"P\",\"v\":\"P\"},{\"n\":\"Q\",\"v\":\"Q\"},{\"n\":\"R\",\"v\":\"R\"},{\"n\":\"S\",\"v\":\"S\"},{\"n\":\"T\",\"v\":\"T\"},{\"n\":\"U\",\"v\":\"U\"},{\"n\":\"V\",\"v\":\"V\"},{\"n\":\"W\",\"v\":\"W\"},{\"n\":\"X\",\"v\":\"X\"},{\"n\":\"Y\",\"v\":\"Y\"},{\"n\":\"Z\",\"v\":\"Z\"},{\"n\":\"0-9\",\"v\":\"0-9\"}]},{\"key\":2,\"name\":\"排序\",\"value\":[{\"n\":\"时间\",\"v\":\"time\"},{\"n\":\"人气\",\"v\":\"hits\"},{\"n\":\"评分\",\"v\":\"score\"}]}],\"2\":[{\"key\":0,\"name\":\"类型\",\"value\":[{\"n\":\"全部\",\"v\":\"2\"},{\"n\":\"港台剧\",\"v\":\"\"},{\"n\":\"国产剧\",\"v\":\"13\"},{\"n\":\"港台剧\",\"v\":\"14\"},{\"n\":\"日韩剧\",\"v\":\"15\"},{\"n\":\"欧美剧\",\"v\":\"16\"},{\"n\":\"纪录片\",\"v\":\"21\"},{\"n\":\"泰国剧\",\"v\":\"24\"}]},{\"key\":3,\"name\":\"剧情\",\"value\":[{\"n\":\"全部\",\"v\":\"\"},{\"n\":\"古装\",\"v\":\"古装\"},{\"n\":\"战争\",\"v\":\"战争\"},{\"n\":\"青春偶像\",\"v\":\"青春偶像\"},{\"n\":\"喜剧\",\"v\":\"喜剧\"},{\"n\":\"家庭\",\"v\":\"家庭\"},{\"n\":\"犯罪\",\"v\":\"犯罪\"},{\"n\":\"动作\",\"v\":\"动作\"},{\"n\":\"奇幻\",\"v\":\"奇幻\"},{\"n\":\"剧情\",\"v\":\"剧情\"},{\"n\":\"历史\",\"v\":\"历史\"},{\"n\":\"经典\",\"v\":\"经典\"},{\"n\":\"乡村\",\"v\":\"乡村\"},{\"n\":\"情景\",\"v\":\"情景\"},{\"n\":\"商战\",\"v\":\"商战\"},{\"n\":\"网剧\",\"v\":\"网剧\"},{\"n\":\"其他\",\"v\":\"其他\"}]},{\"key\":1,\"name\":\"地区\",\"value\":[{\"n\":\"全部\",\"v\":\"\"},{\"n\":\"中国大陆\",\"v\":\"中国大陆\"},{\"n\":\"中国香港\",\"v\":\"中国香港\"},{\"n\":\"中国台湾\",\"v\":\"中国台湾\"},{\"n\":\"韩国\",\"v\":\"韩国\"},{\"n\":\"日本\",\"v\":\"日本\"},{\"n\":\"美国\",\"v\":\"美国\"},{\"n\":\"法国\",\"v\":\"法国\"},{\"n\":\"英国\",\"v\":\"英国\"},{\"n\":\"德国\",\"v\":\"德国\"},{\"n\":\"泰国\",\"v\":\"泰国\"},{\"n\":\"新加坡\",\"v\":\"新加坡\"},{\"n\":\"马来西亚\",\"v\":\"马来西亚\"},{\"n\":\"印度\",\"v\":\"印度\"},{\"n\":\"法国\",\"v\":\"法国\"},{\"n\":\"英国\",\"v\":\"英国\"},{\"n\":\"德国\",\"v\":\"德国\"},{\"n\":\"意大利\",\"v\":\"意大利\"},{\"n\":\"西班牙\",\"v\":\"西班牙\"},{\"n\":\"加拿大\",\"v\":\"加拿大\"},{\"n\":\"其他\",\"v\":\"其他\"}]},{\"key\":11,\"name\":\"年份\",\"value\":[{\"n\":\"全部\",\"v\":\"\"},{\"n\":\"2022\",\"v\":\"2022\"},{\"n\":\"2021\",\"v\":\"2021\"},{\"n\":\"2020\",\"v\":\"2020\"},{\"n\":\"2019\",\"v\":\"2019\"},{\"n\":\"2018\",\"v\":\"2018\"},{\"n\":\"2017\",\"v\":\"2017\"},{\"n\":\"2016\",\"v\":\"2016\"},{\"n\":\"2015\",\"v\":\"2015\"},{\"n\":\"2014\",\"v\":\"2014\"},{\"n\":\"2013\",\"v\":\"2013\"},{\"n\":\"2012\",\"v\":\"2012\"},{\"n\":\"2011\",\"v\":\"2011\"},{\"n\":\"2010\",\"v\":\"2010\"},{\"n\":\"2009\",\"v\":\"2009\"},{\"n\":\"2008\",\"v\":\"2008\"},{\"n\":\"2007\",\"v\":\"2007\"},{\"n\":\"2006\",\"v\":\"2006\"},{\"n\":\"2005\",\"v\":\"2005\"},{\"n\":\"2004\",\"v\":\"2004\"}]},{\"key\":4,\"name\":\"语言\",\"value\":[{\"n\":\"全部\",\"v\":\"\"},{\"n\":\"国语\",\"v\":\"国语\"},{\"n\":\"英语\",\"v\":\"英语\"},{\"n\":\"粤语\",\"v\":\"粤语\"},{\"n\":\"闽南语\",\"v\":\"闽南语\"},{\"n\":\"韩语\",\"v\":\"韩语\"},{\"n\":\"日语\",\"v\":\"日语\"},{\"n\":\"其它\",\"v\":\"其它\"}]},{\"key\":5,\"name\":\"字母\",\"value\":[{\"n\":\"全部\",\"v\":\"\"},{\"n\":\"A\",\"v\":\"A\"},{\"n\":\"B\",\"v\":\"B\"},{\"n\":\"C\",\"v\":\"C\"},{\"n\":\"D\",\"v\":\"D\"},{\"n\":\"E\",\"v\":\"E\"},{\"n\":\"F\",\"v\":\"F\"},{\"n\":\"G\",\"v\":\"G\"},{\"n\":\"H\",\"v\":\"H\"},{\"n\":\"I\",\"v\":\"I\"},{\"n\":\"J\",\"v\":\"J\"},{\"n\":\"K\",\"v\":\"K\"},{\"n\":\"L\",\"v\":\"L\"},{\"n\":\"M\",\"v\":\"M\"},{\"n\":\"N\",\"v\":\"N\"},{\"n\":\"O\",\"v\":\"O\"},{\"n\":\"P\",\"v\":\"P\"},{\"n\":\"Q\",\"v\":\"Q\"},{\"n\":\"R\",\"v\":\"R\"},{\"n\":\"S\",\"v\":\"S\"},{\"n\":\"T\",\"v\":\"T\"},{\"n\":\"U\",\"v\":\"U\"},{\"n\":\"V\",\"v\":\"V\"},{\"n\":\"W\",\"v\":\"W\"},{\"n\":\"X\",\"v\":\"X\"},{\"n\":\"Y\",\"v\":\"Y\"},{\"n\":\"Z\",\"v\":\"Z\"},{\"n\":\"0-9\",\"v\":\"0-9\"}]},{\"key\":2,\"name\":\"排序\",\"value\":[{\"n\":\"时间\",\"v\":\"time\"},{\"n\":\"人气\",\"v\":\"hits\"},{\"n\":\"评分\",\"v\":\"score\"}]}],\"4\":[{\"key\":3,\"name\":\"剧情\",\"value\":[{\"n\":\"全部\",\"v\":\"\"},{\"n\":\"情感\",\"v\":\"情感\"},{\"n\":\"科幻\",\"v\":\"科幻\"},{\"n\":\"热血\",\"v\":\"热血\"},{\"n\":\"推理\",\"v\":\"推理\"},{\"n\":\"搞笑\",\"v\":\"搞笑\"},{\"n\":\"冒险\",\"v\":\"冒险\"},{\"n\":\"萝莉\",\"v\":\"萝莉\"},{\"n\":\"校园\",\"v\":\"校园\"},{\"n\":\"动作\",\"v\":\"动作\"},{\"n\":\"机战\",\"v\":\"机战\"},{\"n\":\"运动\",\"v\":\"运动\"},{\"n\":\"战争\",\"v\":\"战争\"},{\"n\":\"少年\",\"v\":\"少年\"},{\"n\":\"少女\",\"v\":\"少女\"},{\"n\":\"社会\",\"v\":\"社会\"},{\"n\":\"原创\",\"v\":\"原创\"},{\"n\":\"亲子\",\"v\":\"亲子\"},{\"n\":\"益智\",\"v\":\"益智\"},{\"n\":\"其他\",\"v\":\"其他\"}]},{\"key\":1,\"name\":\"地区\",\"value\":[{\"n\":\"全部\",\"v\":\"\"},{\"n\":\"中国\",\"v\":\"中国\"},{\"n\":\"日本\",\"v\":\"日本\"},{\"n\":\"欧美\",\"v\":\"欧美\"},{\"n\":\"其他\",\"v\":\"其他\"}]},{\"key\":11,\"name\":\"年份\",\"value\":[{\"n\":\"全部\",\"v\":\"\"},{\"n\":\"2022\",\"v\":\"2022\"},{\"n\":\"2021\",\"v\":\"2021\"},{\"n\":\"2020\",\"v\":\"2020\"},{\"n\":\"2019\",\"v\":\"2019\"},{\"n\":\"2018\",\"v\":\"2018\"},{\"n\":\"2017\",\"v\":\"2017\"},{\"n\":\"2016\",\"v\":\"2016\"},{\"n\":\"2015\",\"v\":\"2015\"},{\"n\":\"2014\",\"v\":\"2014\"},{\"n\":\"2013\",\"v\":\"2013\"},{\"n\":\"2012\",\"v\":\"2012\"},{\"n\":\"2011\",\"v\":\"2011\"},{\"n\":\"2010\",\"v\":\"2010\"},{\"n\":\"2009\",\"v\":\"2009\"},{\"n\":\"2008\",\"v\":\"2008\"},{\"n\":\"2007\",\"v\":\"2007\"},{\"n\":\"2006\",\"v\":\"2006\"},{\"n\":\"2005\",\"v\":\"2005\"},{\"n\":\"2004\",\"v\":\"2004\"},{\"n\":\"2003\",\"v\":\"2003\"},{\"n\":\"2002\",\"v\":\"2002\"},{\"n\":\"2001\",\"v\":\"2001\"},{\"n\":\"2000\",\"v\":\"2000\"}]},{\"key\":2,\"name\":\"排序\",\"value\":[{\"n\":\"时间\",\"v\":\"time\"},{\"n\":\"人气\",\"v\":\"hits\"},{\"n\":\"评分\",\"v\":\"score\"}]}]}");
         } catch (JSONException e) {
             SpiderDebug.log(e);
@@ -70,7 +69,15 @@ public class Xinsj extends Spider {
     protected static HashMap<String, String> postHeaders() {
         HashMap<String, String> hashMap = new HashMap<>();
         hashMap.put("User-Agent", " Mozilla/5.0 (Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.62 Safari/537.36");     
-        hashMap.put("Origin", "https://jx1.idcdr.com");
+        hashMap.put("Origin", "https://jx2.idcdr.com");
+        return hashMap;
+    }
+    protected static HashMap<String, String> post1Headers() {
+        HashMap<String, String> hashMap = new HashMap<>();
+        hashMap.put("User-Agent", " Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/537.36  (KHTML, like Gecko) Version/13.0 Mobile/15E148 Safari/537.36");     
+        
+        
+       
         return hashMap;
     }
     /**
@@ -82,7 +89,7 @@ public class Xinsj extends Spider {
     protected HashMap<String, String> getHeaders(String url) {
         HashMap<String, String> headers = new HashMap<>();
         headers.put("method", "GET");
-        headers.put("Host", siteHost);
+        
         headers.put("Upgrade-Insecure-Requests", "1");
         headers.put("DNT", "1");
         headers.put("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.5005.62 Safari/537.36");
@@ -349,7 +356,7 @@ public class Xinsj extends Spider {
                 if (!found)
                     continue;
                 String playList = "";
-                Elements playListA = sourceList.get(i).select("div a");
+                Elements playListA = sourceList.get(i).select("div.scroll-content a");
                 List<String> vodItems = new ArrayList<>();
 
                 for (int j = 0; j < playListA.size(); j++) {
@@ -417,11 +424,76 @@ public class Xinsj extends Spider {
                     JSONObject player = new JSONObject(scContent.substring(scContent.indexOf('{'), scContent.lastIndexOf('}') + 1));
                     
                     String videoUrl = player.getString("url");
+                     if (player.getString("url").contains(".m3u8") || player.getString("url").contains(".mp4")) {
+                                result.put("parse", 0);
+                                result.put("playUrl", "");
+                                result.put("url", videoUrl);
+                                break;
+                            } 
                    
                     
                     JSONObject pCfg = playerConfig.getJSONObject(player.getString("from"));
 
                         String show = pCfg.getString("show");
+                        
+                         if (show.contains("专享")){
+                        
+                        //String jxurl = "https://player.tjomet.com/lgyy/?url=" + player.getString("url");       
+                        
+                        String jxurl = pCfg.getString("parse") + player.getString("url");
+                        Document doc = Jsoup.parse(OkHttpUtil.string(jxurl, Headers()));
+                        Elements script = doc.select("body>script");
+                        for (int j = 0; j < script.size(); j++) {
+                            String Content = script.get(j).html().trim();
+                            Matcher matcher1 = urlt.matcher(Content);
+							String video_url ="";
+							if (matcher1.find()){								
+								video_url = matcher1.group(0);
+							}
+							// System.out.println("urt" + matcher1);
+							Matcher matcher2 = time.matcher(Content);
+							String video_tm = "";
+							if (matcher2.find())  {                       
+								video_tm = matcher2.group(0);
+							}
+							Matcher matcher3 = key.matcher(Content);
+							String key = "";
+							if (matcher3.find()){
+								key = matcher3.group(0);
+							}
+                           
+
+							HashMap hashMap = new HashMap();
+                               //     hashMap.put("token", video_token);
+                                    hashMap.put("url", video_url);
+                                    hashMap.put("time", video_tm);
+                                    hashMap.put("key", key);
+                           
+                                    
+                            OkHttpUtil.post(OkHttpUtil.defaultClient(), "https://jx2.idcdr.com:443/m3u81/API.php", hashMap, postHeaders(),new OKCallBack.OKCallBackString() {
+                                
+                                protected void onFailure(Call call, Exception exc) {
+                                }
+
+                                public void onResponse(String str) {
+                                    try {
+                                        String url = new JSONObject(str).getString("url");
+                                        
+                                        result.put("url", url);
+                                        
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            });
+                            
+                            result.put("parse", 0);
+                            result.put("playUrl", "");
+                            result.put("header", headers.toString());
+                        }
+                        break;
+                    }
+                        
                         
                         if (show.contains("蓝光专线①")){
                         
@@ -450,14 +522,14 @@ public class Xinsj extends Spider {
 							}
 
 
-							HashMap hashMap = new HashMap();
+							LinkedHashMap hashMap = new LinkedHashMap();
                                //     hashMap.put("token", video_token);
                                     hashMap.put("url", video_url);
                                     hashMap.put("time", video_tm);
                                     hashMap.put("key", key);
                            
                                     
-                            OkHttpUtil.post(OkHttpUtil.defaultClient(), "https://jx1.idcdr.com/m3u8/API.php", hashMap, postHeaders(),new OKCallBack.OKCallBackString() {
+                            OkHttpUtil.post(OkHttpUtil.defaultClient(), "https://jx1.idcdr.com/m3u8/API.php", hashMap, post1Headers(),new OKCallBack.OKCallBackString() {
                                 
                                 protected void onFailure(Call call, Exception exc) {
                                 }
@@ -478,18 +550,17 @@ public class Xinsj extends Spider {
                             result.put("playUrl", "");
                             result.put("header", headers.toString());
                         }
+                        break;
                         
                     }
-                    if (player.getString("url").contains(".m3u8")) {
-                                result.put("parse", 0);
-                                result.put("playUrl", "");
-                                result.put("url", videoUrl);
-                            } else{
-                               if (!player.getString("url").contains("BYGA"))                                      {
-                                result.put("parse", 1);
-                                result.put("playUrl", "");
-                                result.put("url", url);
-                            }}
+                    
+                        if (Misc.isVip(videoUrl)) { 
+						
+							result.put("jx", "1");
+							result.put("url", videoUrl);
+							result.put("parse", 1);
+                            result.put("playUrl", "");}
+                            break;
                 }
             }
             return result.toString();
