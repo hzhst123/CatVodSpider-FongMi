@@ -1,12 +1,16 @@
 @echo off
 
 del "%~dp0\custom_spider.jar"
+
 rd /s/q "%~dp0\Smali_classes"
 
 java -jar "%~dp0\3rd\baksmali-2.5.2.jar" d "%~dp0\..\app\build\intermediates\dex\release\minifyReleaseWithR8\classes.dex" -o "%~dp0\Smali_classes"
 
 rd /s/q "%~dp0\spider.jar\smali\com\github\catvod\spider"
 rd /s/q "%~dp0\spider.jar\smali\com\github\catvod\parser"
+rd /s/q "%~dp0\spider.jar\smali\com\github\catvod\net"
+rd /s/q "%~dp0\spider.jar\smali\com\github\catvod\utils"
+rd /s/q "%~dp0\spider.jar\smali\com\github\catvod\bean"
 
 if not exist "%~dp0\spider.jar\smali\com\github\catvod\" md "%~dp0\spider.jar\smali\com\github\catvod\"
 
@@ -16,6 +20,9 @@ if "%1" == "ec" (
 
 move "%~dp0\Smali_classes\com\github\catvod\spider" "%~dp0\spider.jar\smali\com\github\catvod\"
 move "%~dp0\Smali_classes\com\github\catvod\parser" "%~dp0\spider.jar\smali\com\github\catvod\"
+move "%~dp0\Smali_classes\com\github\catvod\net" "%~dp0\spider.jar\smali\com\github\catvod\"
+move "%~dp0\Smali_classes\com\github\catvod\utils" "%~dp0\spider.jar\smali\com\github\catvod\"
+move "%~dp0\Smali_classes\com\github\catvod\bean" "%~dp0\spider.jar\smali\com\github\catvod\"
 
 rd /s/q "%~dp0\Smali_classes"
 
@@ -27,6 +34,9 @@ certUtil -hashfile "%~dp0\custom_spider.jar" MD5 | find /i /v "md5" | find /i /v
 
 rd /s/q "%~dp0\spider.jar\smali\com\github\catvod\spider"
 rd /s/q "%~dp0\spider.jar\smali\com\github\catvod\parser"
+rd /s/q "%~dp0\spider.jar\smali\com\github\catvod\net"
+rd /s/q "%~dp0\spider.jar\smali\com\github\catvod\utils"
+rd /s/q "%~dp0\spider.jar\smali\com\github\catvod\bean"
 
 rd /s/q "%~dp0\spider.jar\build"
 rd /s/q "%~dp0\spider.jar\dist"
