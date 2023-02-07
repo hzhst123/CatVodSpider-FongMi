@@ -3,11 +3,11 @@ package com.github.catvod.spider;
 import android.content.Context;
 import android.text.TextUtils;
 
+import com.github.catvod.bean.xpath.Rule;
 import com.github.catvod.crawler.Spider;
 import com.github.catvod.crawler.SpiderDebug;
-import com.github.catvod.utils.Misc;
+import com.github.catvod.utils.Utils;
 import com.github.catvod.utils.okhttp.OkHttpUtil;
-import com.github.catvod.xpath.XPathRule;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -80,7 +80,7 @@ public class XPath extends Spider {
                             id = rule.getHomeVodIdR(id);
                             String pic = vodNodes.get(i).selOne(rule.getHomeVodImg()).asString().trim();
                             pic = rule.getHomeVodImgR(pic);
-                            pic = Misc.fixUrl(webUrl, pic);
+                            pic = Utils.fixUrl(webUrl, pic);
                             String mark = "";
                             if (!rule.getHomeVodMark().isEmpty()) {
                                 try {
@@ -180,7 +180,7 @@ public class XPath extends Spider {
                             id = rule.getCateVodIdR(id);
                             String pic = vod.optString(rule.getCateVodImg()).trim();
                             pic = rule.getCateVodImgR(pic);
-                            pic = Misc.fixUrl(webUrl, pic);
+                            pic = Utils.fixUrl(webUrl, pic);
 							String mark = "";
 							if (!rule.getCateVodMark().isEmpty()) {
 								try {
@@ -209,7 +209,7 @@ public class XPath extends Spider {
                 id = rule.getCateVodIdR(id);
                 String pic = vodNodes.get(i).selOne(rule.getCateVodImg()).asString().trim();
                 pic = rule.getCateVodImgR(pic);
-                pic = Misc.fixUrl(webUrl, pic);
+                pic = Utils.fixUrl(webUrl, pic);
                 String mark = "";
                 if (!rule.getCateVodMark().isEmpty()) {
                     try {
@@ -268,7 +268,7 @@ public class XPath extends Spider {
 
             cover = vodNode.selOne(rule.getDetailImg()).asString().trim();
             cover = rule.getDetailImgR(cover);
-            cover = Misc.fixUrl(webUrl, cover);
+            cover = Utils.fixUrl(webUrl, cover);
 
             if (!rule.getDetailCate().isEmpty()) {
                 try {
@@ -519,7 +519,7 @@ public class XPath extends Spider {
                     id = rule.getSearchVodIdR(id);
                     String pic = vodNodes.get(i).selOne(rule.getSearchVodImg()).asString().trim();
                     pic = rule.getSearchVodImgR(pic);
-                    pic = Misc.fixUrl(webUrl, pic);
+                    pic = Utils.fixUrl(webUrl, pic);
                     String mark = "";
                     if (!rule.getCateVodMark().isEmpty()) {
                         try {
@@ -555,7 +555,7 @@ public class XPath extends Spider {
                             id = rule.getSearchVodIdR(id);
                             String pic = vod.optString(rule.getSearchVodImg()).trim();
                             pic = rule.getSearchVodImgR(pic);
-                            pic = Misc.fixUrl(webUrl, pic);
+                            pic = Utils.fixUrl(webUrl, pic);
                             String mark = vod.optString(rule.getSearchVodMark()).trim();
                             mark = rule.getSearchVodMarkR(mark);
                             JSONObject v = new JSONObject();
@@ -579,7 +579,7 @@ public class XPath extends Spider {
                     id = rule.getSearchVodIdR(id);
                     String pic = vodNodes.get(i).selOne(rule.getSearchVodImg()).asString().trim();
                     pic = rule.getSearchVodImgR(pic);
-                    pic = Misc.fixUrl(webUrl, pic);
+                    pic = Utils.fixUrl(webUrl, pic);
                     String mark = "";
                     if (!rule.getCateVodMark().isEmpty()) {
                         try {
@@ -628,17 +628,17 @@ public class XPath extends Spider {
     }
 
     protected String ext = null;
-    protected XPathRule rule = null;
+    protected Rule rule = null;
 
     protected void fetchRule() {
         if (rule == null) {
             if (ext != null) {
                 if (ext.startsWith("http")) {
                     String json = OkHttpUtil.string(ext, null);
-                    rule = XPathRule.fromJson(json);
+                    rule = Rule.fromJson(json);
                     loadRuleExt(json);
                 } else {
-                    rule = XPathRule.fromJson(ext);
+                    rule = Rule.fromJson(ext);
                     loadRuleExt(ext);
                 }
             }

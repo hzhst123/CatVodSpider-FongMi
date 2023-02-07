@@ -9,293 +9,325 @@ import java.util.LinkedHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+
 public class Rule {
     /**
      * user-agent
      */
     private String ua;
     /**
-     * 取得分類和首頁推薦的Url
+     * 获取分类和首页推荐的Url
      */
     private String homeUrl;
     /**
-     * 分類節點 xpath
+     * 分类节点 xpath
      */
     private String cateNode;
     /**
-     * 分類節點名 xpath
+     * 分类节点名 xpath
      */
     private String cateName;
     /**
-     * 正則對取到的數據進行二次處理
+     * 正则对取到的数据进行二次处理
      */
     private Pattern cateNameR;
     /**
-     * 分類節點 id xpath
+     * 分类节点id xpath
      */
     private String cateId;
     /**
-     * 正則對取到的數據進行二次處理
+     * 正则对取到的数据进行二次处理
      */
     private Pattern cateIdR;
     /**
-     * 手動指定分類如果有則不從 homeUrl 中獲取分類
+     * 手动指定 分类 如果有则不从homeUrl中获取分类
      */
-    private final LinkedHashMap<String, String> cateManual = new LinkedHashMap<>();
+    private LinkedHashMap<String, String> cateManual = new LinkedHashMap<>();
 
     /**
-     * 篩選
+     * 筛选
      */
     private JSONObject filter;
 
     /**
-     * 更新推薦影片節點 xpath
+     * 更新推荐视频节点 xpath
      */
     private String homeVodNode;
     /**
-     * 更新推薦影片名稱 xpath
+     * 更新推荐视频名称 xpath
      */
     private String homeVodName;
     /**
-     * 正則對取到的數據進行二次處理
+     * 正则对取到的数据进行二次处理
      */
     private Pattern homeVodNameR;
     /**
-     * 更新推薦影片 id xpath
+     * 更新推荐视频id xpath
      */
     private String homeVodId;
     /**
-     * 正則對取到的數據進行二次處理
+     * 正则对取到的数据进行二次处理
      */
     private Pattern homeVodIdR;
     /**
-     * 更新推薦影片圖片 xpath
+     * 更新推荐视频图片 xpath
      */
     private String homeVodImg;
     /**
-     * 正則對取到的數據進行二次處理
+     * 正则对取到的数据进行二次处理
      */
     private Pattern homeVodImgR;
     /**
-     * 更新推薦影片簡介 xpath
+     * 更新推荐视频简介 xpath
      */
     private String homeVodMark;
     /**
-     * 正則對取到的數據進行二次處理
+     * 正则对取到的数据进行二次处理
      */
     private Pattern homeVodMarkR;
     /**
-     * 分類頁地址
+     * 分类页地址
      */
     private String cateUrl;
     /**
-     * 分類頁影片節點 xpath
+     * 分类页地址2
+     */
+    private String cateUrl2;
+
+    private String cookie;
+
+    /**
+     * 搜索post请求
+     */
+    private String poBody;
+    /**
+     * 分类叶视频节点 xpath
      */
     private String cateVodNode;
     /**
-     * 分類頁影片名稱 xpath
+     * 正则获取json数据
+     */
+    private Pattern cateVodJsonR;
+    /**
+     * 分类叶视频名称 xpath
      */
     private String cateVodName;
     /**
-     * 正則對取到的數據進行二次處理
+     * 正则对取到的数据进行二次处理
      */
     private Pattern cateVodNameR;
     /**
-     * 分類頁影片影片id xpath
+     * 分类叶视频视频id xpath
      */
     private String cateVodId;
     /**
-     * 正則對取到的數據進行二次處理
+     * 正则对取到的数据进行二次处理
      */
     private Pattern cateVodIdR;
     /**
-     * 分類頁影片影片圖片 xpath
+     * 分类叶视频视频图片 xpath
      */
     private String cateVodImg;
     /**
-     * 正則對取到的數據進行二次處理
+     * 正则对取到的数据进行二次处理
      */
     private Pattern cateVodImgR;
     /**
-     * 分類頁影片影片簡介 xpath
+     * 分类叶视频视频简介 xpath
      */
     private String cateVodMark;
     /**
-     * 正則對取到的數據進行二次處理
+     * 正则对取到的数据进行二次处理
      */
     private Pattern cateVodMarkR;
 
     /**
-     * 詳情頁面
+     * 详情页面
      */
     private String dtUrl;
     /**
-     * 詳情節點 xpath
+     * 详情节点 xpath
      */
     private String dtNode;
     /**
-     * 詳情影片 xpath
+     * 详情 视频名 xpath
      */
     private String dtName;
     /**
-     * 正則對取到的數據進行二次處理
+     * 正则对取到的数据进行二次处理
      */
     private Pattern dtNameR;
     /**
-     * 詳情影片圖片 xpath
+     * 详情视频图片 xpath
      */
     private String dtImg;
     /**
-     * 正則對取到的數據進行二次處理
+     * 正则对取到的数据进行二次处理
      */
     private Pattern dtImgR;
     /**
-     * 詳情影片分類 xpath
+     * 详情视频分类 xpath
      */
     private String dtCate;
     /**
-     * 正則對取到的數據進行二次處理
+     * 正则对取到的数据进行二次处理
      */
     private Pattern dtCateR;
     /**
-     * 詳情影片年份 xpath
+     * 详情视频年份 xpath
      */
     private String dtYear;
     /**
-     * 正則對取到的數據進行二次處理
+     * 正则对取到的数据进行二次处理
      */
     private Pattern dtYearR;
     /**
-     * 詳情影片地區 xpath
+     * 详情视频地区 xpath
      */
     private String dtArea;
     /**
-     * 正則對取到的數據進行二次處理
+     * 正则对取到的数据进行二次处理
      */
     private Pattern dtAreaR;
     /**
-     * 詳情影片簡介 xpath
+     * 详情视频简介 xpath
      */
     private String dtMark;
     /**
-     * 正則對取到的數據進行二次處理
+     * 正则对取到的数据进行二次处理
      */
     private Pattern dtMarkR;
     /**
-     * 詳情演員 xpath
+     * 详情演员 xpath
      */
     private String dtActor;
     /**
-     * 正則對取到的數據進行二次處理
+     * 正则对取到的数据进行二次处理
      */
     private Pattern dtActorR;
     /**
-     * 詳情導演 xpath
+     * 详情导演 xpath
      */
     private String dtDirector;
     /**
-     * 正則對取到的數據進行二次處理
+     * 正则对取到的数据进行二次处理
      */
     private Pattern dtDirectorR;
     /**
-     * 詳情說明 xpath
+     * 详情 说明 长  xpath
      */
     private String dtDesc;
     /**
-     * 正則對取到的數據進行二次處理
+     * 正则对取到的数据进行二次处理
      */
     private Pattern dtDescR;
 
     /**
-     * 詳情播放來源節點
+     * 详情播放来源节点
      */
     private String dtFromNode;
     /**
-     * 詳情播放來源名稱 xpath
+     * 详情播放来源名称 xpath
      */
     private String dtFromName;
     /**
-     * 詳情
+     * 详情
      */
     private Pattern dtFromNameR;
     /**
-     * 詳情播放地址列表節點  xpath
+     * 详情播放地址列表节点  xpath
      */
     private String dtUrlNode;
     /**
-     * 詳情播放地址節點  xpath
+     * 详情播放地址节点  xpath
      */
     private String dtUrlSubNode;
     /**
-     * 詳情播放地址id  xpath
+     * 详情播放地址id  xpath
      */
     private String dtUrlId;
+
+    private String dtUrl2;
     /**
-     * 詳情
+     * 详情
      */
     private Pattern dtUrlIdR;
+
+    private Pattern dtJsonR;
     /**
-     * 詳情播放地址名稱  xpath
+     * 详情播放地址名称  xpath
      */
     private String dtUrlName;
     /**
-     * 詳情
+     * 详情
      */
     private Pattern dtUrlNameR;
     /**
-     * 播放頁面url
+     * 详情播放选集反转
+     */
+    private boolean dtEpiRevers;
+    /**
+     * 播放页面url
      */
     private String playUrl;
     /**
-     * 播放解析調用ua
+     * 播放解析调用ua
      */
     private String playUa;
-    /**
-     * 播放解析調用referer
-     */
-    private String playReferer;
 
     /**
-     * 搜尋頁地址
+     * 搜索页地址
      */
     private String searchUrl;
 
     /**
-     * 搜尋頁影片節點 xpath
+     * 搜索页视频节点 xpath
      */
     private String scVodNode;
     /**
-     * 搜尋頁影片名稱 xpath
+     * 搜索页视频名称 xpath
      */
     private String scVodName;
     /**
-     * 正則對取到的數據進行二次處理
+     * 正则对取到的数据进行二次处理
      */
     private Pattern scVodNameR;
     /**
-     * 搜尋頁影片id xpath
+     * 搜索页视频id xpath
      */
     private String scVodId;
     /**
-     * 正則對取到的數據進行二次處理
+     * 正则对取到的数据进行二次处理
      */
     private Pattern scVodIdR;
     /**
-     * 搜尋頁影片圖片 xpath
+     * 搜索页视频图片 xpath
      */
     private String scVodImg;
     /**
-     * 正則對取到的數據進行二次處理
+     * 正则对取到的数据进行二次处理
      */
     private Pattern scVodImgR;
     /**
-     * 搜尋頁影片簡介 xpath
+     * 搜索页视频简介 xpath
      */
     private String scVodMark;
     /**
-     * 正則對取到的數據進行二次處理
+     * 正则对取到的数据进行二次处理
      */
     private Pattern scVodMarkR;
+    /**
+     * 手动嗅探
+     */
+    private boolean ManualSniff;
+    /**
+     * 嗅探词
+     */
+    private String sniffWord;
+    /**
+     * 过滤词
+     */
+    private String filterWord;
 
     private static Pattern getPattern(JSONObject json, String key) {
         String v = json.optString(key).trim();
@@ -355,7 +387,11 @@ public class Rule {
             rule.homeVodMark = jsonObj.optString("homeVodMark").trim();
             rule.homeVodMarkR = getPattern(jsonObj, "homeVodMarkR");
             rule.cateUrl = jsonObj.optString("cateUrl").trim();
+            rule.cateUrl2 = jsonObj.optString("cateUrl2").trim();
+            rule.cookie = jsonObj.optString("cookie").trim();
+            rule.poBody = jsonObj.optString("poBody").trim();
             rule.cateVodNode = jsonObj.optString("cateVodNode").trim();
+            rule.cateVodJsonR = getPattern(jsonObj, "cateVodJsonR");
             rule.cateVodName = jsonObj.optString("cateVodName").trim();
             rule.cateVodNameR = getPattern(jsonObj, "cateVodNameR");
             rule.cateVodId = jsonObj.optString("cateVodId").trim();
@@ -390,12 +426,14 @@ public class Rule {
             rule.dtUrlNode = jsonObj.optString("dtUrlNode");
             rule.dtUrlSubNode = jsonObj.optString("dtUrlSubNode");
             rule.dtUrlId = jsonObj.optString("dtUrlId");
+            rule.dtUrl2 = jsonObj.optString("dtUrl2");
             rule.dtUrlIdR = getPattern(jsonObj, "dtUrlIdR");
+            rule.dtJsonR = getPattern(jsonObj, "dtJsonR");
             rule.dtUrlName = jsonObj.optString("dtUrlName");
             rule.dtUrlNameR = getPattern(jsonObj, "dtUrlNameR");
+            rule.dtEpiRevers = jsonObj.optBoolean("dtEpiRevers", false);
             rule.playUrl = jsonObj.optString("playUrl");
             rule.playUa = jsonObj.optString("playUa");
-            rule.playReferer = jsonObj.optString("playReferer");
             rule.searchUrl = jsonObj.optString("searchUrl");
             rule.scVodNode = jsonObj.optString("scVodNode").trim();
             rule.scVodName = jsonObj.optString("scVodName").trim();
@@ -406,6 +444,9 @@ public class Rule {
             rule.scVodImgR = getPattern(jsonObj, "scVodImgR");
             rule.scVodMark = jsonObj.optString("scVodMark").trim();
             rule.scVodMarkR = getPattern(jsonObj, "scVodMarkR");
+            rule.ManualSniff = jsonObj.optBoolean("ManualSniff", false);
+            rule.sniffWord = jsonObj.optString("sniffWord");
+            rule.filterWord = jsonObj.optString("filterWord");
             return rule;
         } catch (Exception e) {
             SpiderDebug.log(e);
@@ -489,8 +530,24 @@ public class Rule {
         return cateUrl;
     }
 
+    public String getCateUrl2() {
+        return cateUrl2;
+    }
+
+    public String getCookie() {
+        return cookie;
+    }
+
+    public String getPoBody() {
+        return poBody;
+    }
+
     public String getCateVodNode() {
         return cateVodNode;
+    }
+
+    public String getCateVodJsonR(String src) {
+        return doReplaceRegex(cateVodJsonR, src);
     }
 
     public String getCateVodName() {
@@ -628,9 +685,16 @@ public class Rule {
     public String getDetailUrlId() {
         return dtUrlId;
     }
+    public String getDetailUrl2() {
+        return dtUrl2;
+    }
 
     public String getDetailUrlIdR(String src) {
         return doReplaceRegex(dtUrlIdR, src);
+    }
+
+    public String getDetailUrlJsonR(String src) {
+        return doReplaceRegex(dtJsonR, src);
     }
 
     public String getDetailUrlName() {
@@ -641,16 +705,16 @@ public class Rule {
         return doReplaceRegex(dtUrlNameR, src);
     }
 
+    public boolean getDetailEpiRevers() {
+        return dtEpiRevers;
+    }
+
     public String getPlayUrl() {
         return playUrl;
     }
 
     public String getPlayUa() {
         return playUa;
-    }
-
-    public String getPlayReferer() {
-        return playReferer;
     }
 
     public String getSearchUrl() {
@@ -691,5 +755,17 @@ public class Rule {
 
     public String getSearchVodMarkR(String src) {
         return doReplaceRegex(scVodMarkR, src);
+    }
+
+    public boolean getManualSniff() {
+        return ManualSniff;
+    }
+
+    public String getSniffWord() {
+        return sniffWord;
+    }
+
+    public String getFilterWord() {
+        return filterWord;
     }
 }
