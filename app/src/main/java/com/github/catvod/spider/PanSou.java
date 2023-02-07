@@ -8,8 +8,6 @@ import com.github.catvod.crawler.Spider;
 import com.github.catvod.net.OkHttp;
 import com.github.catvod.utils.Utils;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -41,33 +39,33 @@ public class PanSou extends Spider {
         Ali.get().init(extend);
     }
 
-    @Override
-    public String detailContent(List<String> ids) throws Exception {
-        String videoId = ids.get(0);
-        String url = siteUrl + ids.get(0).replace("/s/", "/cv/");
-        Map<String, List<String>> respHeaders = new HashMap<>();
-        OkHttp.stringNoRedirect(url, getHeaders(ids.get(0)), respHeaders);
-        url = OkHttp.getRedirectLocation(respHeaders);
-        String json =  Ali.get().detailContent(Arrays.asList(url));
-        if ("".equals(json)){
-            return  "";
-        }
-        JSONObject result = new JSONObject(json);
-        JSONArray jsonList = result.getJSONArray("list");
-        JSONObject jsonObject = jsonList.getJSONObject(0);
-        jsonObject.put("vod_id",videoId);
-        return result.toString();
-    }
 //    @Override
 //    public String detailContent(List<String> ids) throws Exception {
-//        ids.set(1, ids.get(0));
-//        if (Ali.pattern.matcher(ids.get(0)).find()) return Ali.get().detailContent(ids);
+//        String videoId = ids.get(0);
 //        String url = siteUrl + ids.get(0).replace("/s/", "/cv/");
 //        Map<String, List<String>> respHeaders = new HashMap<>();
 //        OkHttp.stringNoRedirect(url, getHeaders(ids.get(0)), respHeaders);
 //        url = OkHttp.getRedirectLocation(respHeaders);
-//        return Ali.get().detailContent(Arrays.asList(url, ids.get(0)));
+//        String json =  Ali.get().detailContent(Arrays.asList(url));
+//        if ("".equals(json)){
+//            return  "";
+//        }
+//        JSONObject result = new JSONObject(json);
+//        JSONArray jsonList = result.getJSONArray("list");
+//        JSONObject jsonObject = jsonList.getJSONObject(0);
+//        jsonObject.put("vod_id",videoId);
+//        return result.toString();
 //    }
+    @Override
+    public String detailContent(List<String> ids) throws Exception {
+        ids.set(1, ids.get(0));
+        if (Ali.pattern.matcher(ids.get(0)).find()) return Ali.get().detailContent(ids);
+        String url = siteUrl + ids.get(0).replace("/s/", "/cv/");
+        Map<String, List<String>> respHeaders = new HashMap<>();
+        OkHttp.stringNoRedirect(url, getHeaders(ids.get(0)), respHeaders);
+        url = OkHttp.getRedirectLocation(respHeaders);
+        return Ali.get().detailContent(Arrays.asList(url, ids.get(0)));
+    }
 
     @Override
     public String searchContent(String key, boolean quick) {
