@@ -13,7 +13,7 @@ import com.github.catvod.bean.ali.Auth;
 import com.github.catvod.bean.ali.Data;
 import com.github.catvod.bean.ali.Item;
 import com.github.catvod.net.OkHttp;
-import com.github.catvod.utils.Misc;
+import com.github.catvod.utils.Utils;
 import com.github.catvod.utils.Prefers;
 import com.github.catvod.utils.QRCode;
 import com.github.catvod.utils.Trans;
@@ -41,6 +41,7 @@ import java.util.regex.Pattern;
 public class Ali {
 
     public static final Pattern pattern = Pattern.compile("www.aliyundrive.com/s/([^/]+)(/folder/([^/]+))?");
+    private static final String QRCODE = "https://token.cooluc.com/";
     private ScheduledExecutorService service;
     private final Auth auth;
 
@@ -63,7 +64,7 @@ public class Ali {
 
     private HashMap<String, String> getHeaders() {
         HashMap<String, String> headers = new HashMap<>();
-        headers.put("User-Agent", Misc.CHROME);
+        headers.put("User-Agent", Utils.CHROME);
         headers.put("Referer", "https://www.aliyundrive.com/");
         return headers;
     }
@@ -100,8 +101,8 @@ public class Ali {
         if (!matcher.find()) return "";
         String shareId = matcher.group(1);
         String fileId = matcher.groupCount() == 3 ? matcher.group(3) : "";
-        auth.setShareId(shareId); refreshShareToken();
-
+        auth.setShareId(shareId);
+        refreshShareToken();
         if (ids.size() > 1) {
             String vodId = ids.get(1);
             Vod vod = getVod(url, fileId);
@@ -164,7 +165,7 @@ public class Ali {
                 folders.add(file);
             } else if (file.getCategory().equals("video") || file.getCategory().equals("audio")) {
                 files.add(file.parent(parent.getName()));
-            } else if (Misc.isSub(file.getExt())) {
+            } else if (Utils.isSub(file.getExt())) {
                 String key = file.removeExt();
                 if (!subMap.containsKey(key)) subMap.put(key, new ArrayList<>());
                 subMap.get(key).add(key + "@@@" + file.getExt() + "@@@" + file.getFileId());
@@ -311,20 +312,20 @@ public class Ali {
 
     private void checkService() {
         if (service != null) service.shutdownNow();
-        if (auth.getView() != null) Init.run(() -> Misc.removeView(auth.getView()));
+        if (auth.getView() != null) Init.run(() -> Utils.removeView(auth.getView()));
     }
 
     private void getQRCode() {
         HashMap<String, String> headers = new HashMap<>();
-        headers.put("User-Agent", Misc.CHROME);
-        Data data = Data.objectFrom(OkHttp.string("https://token.cooluc.com/qr", headers));
+        headers.put("User-Agent", Utils.CHROME);
+        Data data = Data.objectFrom(OkHttp.string(QRCODE + "qr", headers));
         if (data != null) Init.run(() -> showCode(data));
         service = Executors.newScheduledThreadPool(1);
         if (data != null) service.scheduleAtFixedRate(() -> {
             JsonObject params = new JsonObject();
             params.addProperty("t", data.getData().getT());
             params.addProperty("ck", data.getData().getCk());
-            Data result = Data.objectFrom(OkHttp.postJson("https://easy-token.cooluc.com/ck", params.toString(), headers));
+            Data result = Data.objectFrom(OkHttp.postJson(QRCODE + "ck", params.toString(), headers));
             if (result.hasToken()) setToken(result.getData().getRefreshToken());
         }, 1, 1, TimeUnit.SECONDS);
     }
@@ -339,7 +340,7 @@ public class Ali {
     private void showCode(Data data) {
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
         params.gravity = Gravity.CENTER;
-        Misc.addView(create(data.getData().getCodeContent()), params);
+        Utils.addView(create(data.getData().getCodeContent()), params);
         Init.show("请使用阿里云盘 App 扫描二维码");
     }
 
