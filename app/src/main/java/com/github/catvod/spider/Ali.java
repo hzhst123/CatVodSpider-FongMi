@@ -1,5 +1,9 @@
 package com.github.catvod.spider;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.SystemClock;
 import android.text.TextUtils;
 import android.view.Gravity;
@@ -13,11 +17,10 @@ import com.github.catvod.bean.ali.Auth;
 import com.github.catvod.bean.ali.Data;
 import com.github.catvod.bean.ali.Item;
 import com.github.catvod.net.OkHttp;
-import com.github.catvod.utils.Utils;
 import com.github.catvod.utils.Prefers;
 import com.github.catvod.utils.QRCode;
 import com.github.catvod.utils.Trans;
-import com.google.gson.JsonObject;
+import com.github.catvod.utils.Utils;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -41,9 +44,9 @@ import java.util.regex.Pattern;
 public class Ali {
 
     public static final Pattern pattern = Pattern.compile("www.aliyundrive.com/s/([^/]+)(/folder/([^/]+))?");
-    private static final String QRCODE = "https://token.cooluc.com/";
     private ScheduledExecutorService service;
     private final Auth auth;
+    private AlertDialog dialog;
 
     private static class Loader {
         static volatile Ali INSTANCE = new Ali();
@@ -103,19 +106,13 @@ public class Ali {
         String fileId = matcher.groupCount() == 3 ? matcher.group(3) : "";
         auth.setShareId(shareId);
         refreshShareToken();
-        if (ids.size() > 1) {
-            String vodId = ids.get(1);
-            Vod vod = getVod(url, fileId);
-            vod.setVodId(vodId);
-            return Result.string(vod);
-        }
         return Result.string(getVod(url, fileId));
     }
 
     public String playerContent(String flag, String id) {
         String[] ids = id.split("\\+");
         if (auth.isEmpty()) refreshAccessToken();
-        if (flag.equals("原画")) {
+        if (flag.equals("原畫")) {
             return Result.get().url(getDownloadUrl(ids[0])).subs(getSub(ids)).header(getHeaders()).string();
         } else {
             return Result.get().url(getPreviewUrl(ids[0])).subs(getSub(ids)).header(getHeaders()).string();
@@ -141,8 +138,8 @@ public class Ali {
         vod.setVodPic(object.getString("avatar"));
         vod.setVodName(object.getString("share_name"));
         vod.setVodPlayUrl(TextUtils.join("$$$", sourceUrls));
-        vod.setVodPlayFrom("原画$$$普画");
-        vod.setTypeName("阿里云盘");
+        vod.setVodPlayFrom("原畫$$$普畫");
+        vod.setTypeName("阿里雲盤");
         return vod;
     }
 
@@ -201,7 +198,7 @@ public class Ali {
             auth.setRefreshToken(object.getString("refresh_token"));
             return true;
         } catch (Exception e) {
-            checkService();
+            stopService();
             auth.clean();
             getQRCode();
             return true;
@@ -219,7 +216,7 @@ public class Ali {
             auth.setShareToken(object.getString("share_token"));
             return true;
         } catch (Exception e) {
-            Init.show("来晚啦，改分享已失效。");
+            Init.show("來晚啦，該分享已失效。");
             e.printStackTrace();
             return false;
         }
@@ -310,45 +307,56 @@ public class Ali {
         return result;
     }
 
-    private void checkService() {
-        if (service != null) service.shutdownNow();
-        if (auth.getView() != null) Init.run(() -> Utils.removeView(auth.getView()));
+    private void getQRCode() {
+        Data data = Data.objectFrom(OkHttp.string("https://passport.aliyundrive.com/newlogin/qrcode/generate.do?appName=aliyun_drive&fromSite=52&appName=aliyun_drive&appEntrance=web&isMobile=false&lang=zh_CN&returnUrl=&bizParams=&_bx-v=2.2.3")).getContent().getData();
+        Init.run(() -> showQRCode(data));
     }
 
-    private void getQRCode() {
-        HashMap<String, String> headers = new HashMap<>();
-        headers.put("User-Agent", Utils.CHROME);
-        Data data = Data.objectFrom(OkHttp.string(QRCODE + "qr", headers));
-        if (data != null) Init.run(() -> showCode(data));
+    private void showQRCode(Data data) {
+        try {
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(Utils.dp2px(240), Utils.dp2px(240));
+            ImageView image = new ImageView(Init.context());
+            image.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            image.setImageBitmap(QRCode.getBitmap(data.getCodeContent(), 240, 2));
+            FrameLayout frame = new FrameLayout(Init.context());
+            params.gravity = Gravity.CENTER;
+            frame.addView(image, params);
+            dialog = new AlertDialog.Builder(Init.getActivity()).setView(frame).setOnDismissListener(this::dismiss).show();
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            Init.execute(() -> startService(data.getParams()));
+            Init.show("請使用阿里雲盤 App 掃描二維碼");
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void startService(Map<String, String> params) {
         service = Executors.newScheduledThreadPool(1);
-        if (data != null) service.scheduleAtFixedRate(() -> {
-            JsonObject params = new JsonObject();
-            params.addProperty("t", data.getData().getT());
-            params.addProperty("ck", data.getData().getCk());
-            Data result = Data.objectFrom(OkHttp.postJson(QRCODE + "ck", params.toString(), headers));
-            if (result.hasToken()) setToken(result.getData().getRefreshToken());
+        service.scheduleAtFixedRate(() -> {
+            Data result = Data.objectFrom(OkHttp.post("https://passport.aliyundrive.com/newlogin/qrcode/query.do?appName=aliyun_drive&fromSite=52&_bx-v=2.2.3", params)).getContent().getData();
+            if (result.hasToken()) setToken(result.getToken());
         }, 1, 1, TimeUnit.SECONDS);
     }
 
     private void setToken(String value) {
         Prefers.put("token", value);
-        Init.show("请重新进入播放页");
+        Init.show("請重新進入播放頁");
         auth.setRefreshToken(value);
-        checkService();
+        stopService();
     }
 
-    private void showCode(Data data) {
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
-        params.gravity = Gravity.CENTER;
-        Utils.addView(create(data.getData().getCodeContent()), params);
-        Init.show("请使用阿里云盘 App 扫描二维码");
+    private void stopService() {
+        if (service != null) service.shutdownNow();
+        Init.run(this::dismiss);
     }
 
-    private ImageView create(String value) {
-        ImageView view = new ImageView(Init.context());
-        view.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        view.setImageBitmap(QRCode.getBitmap(value, 250, 2));
-        auth.setView(view);
-        return view;
+    private void dismiss(DialogInterface dialog) {
+        stopService();
+    }
+
+    private void dismiss() {
+        try {
+            if (dialog != null) dialog.dismiss();
+        } catch (Exception ignored) {
+        }
     }
 }
