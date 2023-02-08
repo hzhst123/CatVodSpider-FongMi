@@ -106,13 +106,19 @@ public class Ali {
         String fileId = matcher.groupCount() == 3 ? matcher.group(3) : "";
         auth.setShareId(shareId);
         refreshShareToken();
+        if (ids.size() > 1) {
+            String vodId = ids.get(1);
+            Vod vod = getVod(url, fileId);
+            vod.setVodId(vodId);
+            return Result.string(vod);
+        }
         return Result.string(getVod(url, fileId));
     }
 
     public String playerContent(String flag, String id) {
         String[] ids = id.split("\\+");
         if (auth.isEmpty()) refreshAccessToken();
-        if (flag.equals("原畫")) {
+        if (flag.equals("原画")) {
             return Result.get().url(getDownloadUrl(ids[0])).subs(getSub(ids)).header(getHeaders()).string();
         } else {
             return Result.get().url(getPreviewUrl(ids[0])).subs(getSub(ids)).header(getHeaders()).string();
@@ -138,8 +144,8 @@ public class Ali {
         vod.setVodPic(object.getString("avatar"));
         vod.setVodName(object.getString("share_name"));
         vod.setVodPlayUrl(TextUtils.join("$$$", sourceUrls));
-        vod.setVodPlayFrom("原畫$$$普畫");
-        vod.setTypeName("阿里雲盤");
+        vod.setVodPlayFrom("原画$$$普画");
+        vod.setTypeName("阿里云盘");
         return vod;
     }
 
@@ -216,7 +222,7 @@ public class Ali {
             auth.setShareToken(object.getString("share_token"));
             return true;
         } catch (Exception e) {
-            Init.show("來晚啦，該分享已失效。");
+            Init.show("来晚啦，改分享已失效。");
             e.printStackTrace();
             return false;
         }
@@ -324,7 +330,7 @@ public class Ali {
             dialog = new AlertDialog.Builder(Init.getActivity()).setView(frame).setOnDismissListener(this::dismiss).show();
             dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
             Init.execute(() -> startService(data.getParams()));
-            Init.show("請使用阿里雲盤 App 掃描二維碼");
+            Init.show("请使用阿里云盘 App 扫描二维码");
         } catch (Exception ignored) {
         }
     }
@@ -339,7 +345,7 @@ public class Ali {
 
     private void setToken(String value) {
         Prefers.put("token", value);
-        Init.show("請重新進入播放頁");
+        Init.show("请重新进入播放页");
         auth.setRefreshToken(value);
         stopService();
     }
