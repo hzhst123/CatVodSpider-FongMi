@@ -29,7 +29,8 @@ import java.util.Set;
 import okhttp3.Call;
 
 public class LiteApple extends Spider {
-    private static final String siteUrl = "http://ht.grelighting.cn/api.php";
+    private final String siteUrl = "http://ht.grelighting.cn/api.php";
+    private String audioHost = "ht.grelighting.cn";
 
     private HashMap<String, String> getHeaders(String url, String data) {
         HashMap<String, String> headers = new HashMap<>();
@@ -58,7 +59,14 @@ public class LiteApple extends Spider {
 
     @Override
     public void init(Context context, String extend) {
-        super.init(context, extend);
+        super.init(context,extend);
+        if (!TextUtils.isEmpty(extend)){
+            audioHost = extend;
+        }
+    }
+
+    @Override
+    public void init(Context context) {
         SharedPreferences sharedPreferences = context.getSharedPreferences("spider_LiteApple", Context.MODE_PRIVATE);
         try {
             fakeDevice = sharedPreferences.getString("didd", null);
@@ -207,6 +215,7 @@ public class LiteApple extends Spider {
     @Override
     public String homeVideoContent() {
         try {
+            getTokenKey();
             JSONArray videos = new JSONArray();
             for (int id = 1; id < 5; id++) {
                 if (videos.length() > 30)
@@ -229,7 +238,7 @@ public class LiteApple extends Spider {
                         }
                     }
                 } catch (Exception e) {
-
+                    e.printStackTrace();
                 }
             }
             JSONObject result = new JSONObject();
@@ -287,6 +296,7 @@ public class LiteApple extends Spider {
     @Override
     public String detailContent(List<String> ids) {
         try {
+            getTokenKey();
             String url = siteUrl + "/v2.vod/androiddetail?vod_id=" + ids.get(0);
             String content = OkHttpUtil.string(url, getHeaders(url, ids.get(0)));
             JSONObject dataObject = new JSONObject(decryptResponse(content));
@@ -309,9 +319,9 @@ public class LiteApple extends Spider {
             JSONArray urls = vObj.getJSONArray("urls");
             for (int i = 0; i < urls.length(); i++) {
                 JSONObject u = urls.getJSONObject(i);
-				if (u.getString("url").contains("ht.grelighting.cn")) {
-					continue;
-				}
+                if (u.getString("url").contains(audioHost)) {
+                    continue;
+                }
                 playUrls.add(u.getString("key") + "$" + u.getString("url"));
             }
 
@@ -468,4 +478,3 @@ public class LiteApple extends Spider {
     }
 
 }
-

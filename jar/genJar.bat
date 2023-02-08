@@ -15,6 +15,7 @@ rd /s/q "%~dp0\spider.jar\smali\com\github\catvod\bean"
 if not exist "%~dp0\spider.jar\smali\com\github\catvod\" md "%~dp0\spider.jar\smali\com\github\catvod\"
 
 if "%1" == "ec" (
+    echo encrypt string
     java -Dfile.encoding=utf-8 -jar "%~dp0\3rd\oss.jar" "%~dp0\Smali_classes"
 )
 
@@ -24,6 +25,11 @@ move "%~dp0\Smali_classes\com\github\catvod\net" "%~dp0\spider.jar\smali\com\git
 move "%~dp0\Smali_classes\com\github\catvod\utils" "%~dp0\spider.jar\smali\com\github\catvod\"
 move "%~dp0\Smali_classes\com\github\catvod\bean" "%~dp0\spider.jar\smali\com\github\catvod\"
 
+
+if "%2" == "add" if exist "%~dp0\AddSmali" (
+    echo add smali
+    copy "%~dp0\AddSmali" "%~dp0\spider.jar\smali\com\github\catvod\spider\"
+)
 rd /s/q "%~dp0\Smali_classes"
 
 java -jar "%~dp0\3rd\apktool_2.4.1.jar" b "%~dp0\spider.jar" -c
